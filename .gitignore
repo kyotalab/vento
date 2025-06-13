@@ -24,6 +24,8 @@ target/
 # Added by cargo
 
 /target
+config.yaml
+sftp-private-key.txt
 
 # IDE/editor settings
 .vscode/
