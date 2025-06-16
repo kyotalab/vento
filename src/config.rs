@@ -15,6 +15,7 @@ pub struct Profile {
 #[serde(rename_all = "camelCase")]
 pub struct TransferProfile {
     pub profile_id: String,
+    pub description: Option<String>,
     pub source: Source,
     pub destination: Destination,
     pub transfer_protocol: TransferProtocol,

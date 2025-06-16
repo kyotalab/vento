@@ -25,7 +25,6 @@ target/
 
 /target
 config.yaml
-sftp-private-key.txt
 
 # IDE/editor settings
 .vscode/
