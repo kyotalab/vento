@@ -8,6 +8,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let config_path = &cli.config;
     let profiles = load_profiles(config_path)?;
+    // println!("{:?}", profiles);
+    // Ok(())
     dispatch(cli, profiles)
 }
 

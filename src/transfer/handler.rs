@@ -1,4 +1,6 @@
-use crate::{AppError, ProtocolType, SftpHandler, TransferProfile, TransferProtocolHandler};
+use crate::{
+    AppError, ProtocolType, SftpHandler, SourceType, TransferProfile, TransferProtocolHandler,
+};
 use anyhow::Result;
 
 pub fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
@@ -13,7 +15,11 @@ pub fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
     match profile.transfer_protocol.protocol {
         ProtocolType::Sftp => {
             let handler = SftpHandler;
-            handler.send(&profile)?;
+
+            match profile.source.kind {
+                SourceType::Local => handler.send(&profile)?,
+                SourceType::Sftp => handler.receive(&profile)?,
+            }
         }
         // 将来のプロトコル（例：Scp, Httpなど）
         // TransferProtocolType::Scp => {
