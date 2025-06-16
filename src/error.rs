@@ -27,6 +27,9 @@ pub enum AppError {
         #[source]
         source: CronError, // cron::error::Error を使用
     },
+
+    #[error("Private key reference is missing in the authentication config.")]
+    MissingPrivateKeyReference,
     //... 他の具体的なエラー
 }
 
