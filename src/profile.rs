@@ -35,38 +35,50 @@ pub struct Source {
 
 impl Source {
     pub fn validate(&self) -> Result<(), AppError> {
-        if self.kind == SourceType::Sftp {
-            if self.host.is_none() {
-                return Err(AppError::Validation(
-                    "SFTP source requires 'host'".to_string(),
-                ));
+        match self.kind {
+            SourceType::Local => {
+                println!("local")
             }
-            if self.port.is_none() {
-                return Err(AppError::Validation(
-                    "SFTP source requires 'port'".to_string(),
-                ));
-            }
-            if self.authentication.is_none() {
-                return Err(AppError::Validation(
-                    "SFTP source requires 'authentication'".to_string(),
-                ));
-            } else {
-                self.authentication.as_ref().unwrap().validate()?;
-            }
-        }
-        if self.trigger.kind == TriggerType::Schedule {
-            if let Some(s) = &self.trigger.schedule {
-                s.parse::<cron::Schedule>()
-                    .map_err(|e| AppError::InvalidCronSchedule {
-                        expression: s.clone(),
-                        source: e,
-                    })?;
-            } else {
-                return Err(AppError::Validation(
-                    "Schedule is required when trigger type is 'schedule'".to_string(),
-                ));
+            SourceType::Sftp => {
+                if self.host.is_none() {
+                    return Err(AppError::Validation(
+                        "SFTP source requires 'host'".to_string(),
+                    ));
+                }
+                if self.port.is_none() {
+                    return Err(AppError::Validation(
+                        "SFTP source requires 'port'".to_string(),
+                    ));
+                }
+                if self.authentication.is_none() {
+                    return Err(AppError::Validation(
+                        "SFTP source requires 'authentication'".to_string(),
+                    ));
+                } else {
+                    self.authentication.as_ref().unwrap().validate()?;
+                }
             }
         }
+
+        match self.trigger.kind {
+            TriggerType::Manual => {
+                println!("manual")
+            }
+            TriggerType::Schedule => {
+                if let Some(s) = &self.trigger.schedule {
+                    s.parse::<cron::Schedule>()
+                        .map_err(|e| AppError::InvalidCronSchedule {
+                            expression: s.clone(),
+                            source: e,
+                        })?;
+                } else {
+                    return Err(AppError::Validation(
+                        "Schedule is required when trigger type is 'schedule'".to_string(),
+                    ));
+                }
+            }
+        }
+
         Ok(())
     }
 }
@@ -83,11 +95,18 @@ impl Authentication {
             }
             AuthenticationMethod::PrivateKey | AuthenticationMethod::EnvKey => {
                 if self.private_key_ref.is_none() {
-                    return Err(AppError::AuthenticationFailed(
-                        "Private key authentication requires 'privateKeyRef'".to_string(),
+                    return Err(AppError::Validation(
+                        "Private key or Env key requires 'privateKeyRef'".to_string(),
                     ));
                 }
             } // Manualなど、他の認証方法があればここに追加
+            AuthenticationMethod::SshConfig => {
+                if self.ssh_config_alias.is_none() {
+                    return Err(AppError::Validation(
+                        "SSH config authentication requires 'sshConfigAlias'".to_string(),
+                    ));
+                }
+            }
         }
         Ok(())
     }
@@ -107,6 +126,7 @@ pub struct Authentication {
     pub username: String,
     pub password_ref: Option<String>,
     pub private_key_ref: Option<String>,
+    pub ssh_config_alias: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -115,6 +135,7 @@ pub enum AuthenticationMethod {
     Password,
     PrivateKey,
     EnvKey,
+    SshConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -126,7 +147,7 @@ pub struct Trigger {
 }
 
 impl Trigger {
-    pub fn validate(&self) -> Result<(), Error> {
+    pub fn validate(&self) -> Result<(), AppError> {
         // Result<(), anyhow::Error> を返す
         if self.kind == TriggerType::Schedule {
             // schedule が None の場合は AppError::MissingSchedule を返す
@@ -168,19 +189,25 @@ pub struct Destination {
 
 impl Destination {
     pub fn validate(&self) -> Result<(), Error> {
-        if self.kind == DestinationType::Sftp {
-            if self.host.is_none() {
-                return Err(anyhow!("SFTP destination requires 'host'"));
+        match self.kind {
+            DestinationType::Local => {
+                println!("local")
             }
-            if self.port.is_none() {
-                return Err(anyhow!("SFTP destination requires 'port'"));
-            }
-            if self.authentication.is_none() {
-                return Err(anyhow!("SFTP destination requires 'authentication'"));
-            } else {
-                self.authentication.as_ref().unwrap().validate()?;
+            DestinationType::Sftp => {
+                if self.host.is_none() {
+                    return Err(anyhow!("SFTP destination requires 'host'"));
+                }
+                if self.port.is_none() {
+                    return Err(anyhow!("SFTP destination requires 'port'"));
+                }
+                if self.authentication.is_none() {
+                    return Err(anyhow!("SFTP destination requires 'authentication'"));
+                } else {
+                    self.authentication.as_ref().unwrap().validate()?;
+                }
             }
         }
+
         Ok(())
     }
 }
