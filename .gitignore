@@ -25,6 +25,7 @@ target/
 
 /target
 config.yaml
+profiles.yaml
 
 # IDE/editor settings
 .vscode/

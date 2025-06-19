@@ -5,8 +5,8 @@ use crate::{AppError, Profile, process_transfer_profile};
 
 #[derive(Debug, Parser)]
 pub struct Cli {
-    #[arg(short, long)]
-    pub config: String,
+    // #[arg(short, long)]
+    // pub config: String,
     #[command(subcommand)]
     command: Commands,
 }
