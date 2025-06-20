@@ -12,6 +12,7 @@ pub struct AppConfig {
     pub default_profile_file: Option<String>,
     pub log_level: Option<String>,
     pub log_file: Option<String>,
+    pub log_stdout: Option<bool>,
 }
 
 impl AppConfig {

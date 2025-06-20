@@ -53,8 +53,10 @@ fn setup_logging(app_config: &AppConfig) -> Result<()> {
         })
         .level(log_level);
 
-    // コンソール出力
-    base_config = base_config.chain(std::io::stdout());
+    let should_log_to_stdout = app_config.log_stdout.unwrap_or(true); // デフォルトをtrueにする
+    if should_log_to_stdout {
+        base_config = base_config.chain(std::io::stdout());
+    }
 
     // ログファイル出力が指定されている場合
     if let Some(log_file) = &app_config.log_file {
