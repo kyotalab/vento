@@ -22,10 +22,8 @@ fn main() -> Result<()> {
     }
 
     let profile_path = profile_path.as_ref().unwrap();
-    println!("Using profile file: {}", profile_path);
+    // println!("Using profile file: {}", profile_path);
     let profiles = Profile::load_profiles(Path::new(&profile_path))?;
-
-    println!("{:?}", profiles);
 
     dispatch(cli, profiles)
 }
