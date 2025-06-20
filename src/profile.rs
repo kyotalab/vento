@@ -1,6 +1,6 @@
-use std::str::FromStr as _;
+use std::{fs, str::FromStr as _};
 
-use anyhow::{Error, anyhow};
+use anyhow::{Error, Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 use crate::AppError;
@@ -9,6 +9,14 @@ use crate::AppError;
 #[serde(rename_all = "camelCase")]
 pub struct Profile {
     pub transfer_profiles: Vec<TransferProfile>,
+}
+
+impl Profile {
+    pub fn load_profiles(path: &str) -> Result<Profile> {
+        let yaml = fs::read_to_string(path)?;
+        let profiles: Profile = serde_yaml::from_str(&yaml)?;
+        Ok(profiles)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
