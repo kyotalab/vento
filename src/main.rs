@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
+use chrono;
 use clap::Parser;
 use log::{LevelFilter, error, info};
 use vento::{AppConfig, Cli, Profile, dispatch};
@@ -28,7 +29,13 @@ fn main() -> Result<()> {
     info!("Using profile file: {}", profile_path);
     let profiles = Profile::load_profiles(Path::new(&profile_path))?;
 
-    dispatch(cli, profiles)
+    let result = dispatch(cli, profiles);
+
+    if let Err(e) = &result {
+        error!("Application error: {:?}", e); // エラーをログに出力
+    }
+
+    result
 }
 
 fn setup_logging(app_config: &AppConfig) -> Result<()> {
@@ -45,9 +52,11 @@ fn setup_logging(app_config: &AppConfig) -> Result<()> {
     let mut base_config = fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
-                "[{}] {} - {}",
+                // ★この部分を修正★
+                "{} [{}] [{}] {}", // [日付 時間][レベル][モジュール] メッセージ
+                chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                 record.level(),
-                record.target(), // ログを出力したモジュール
+                record.target(),
                 message
             ))
         })
