@@ -1,3 +1,6 @@
+use std::fs;
+
+use anyhow::{Context, Result};
 use config::{Config, ConfigError, File};
 use etcetera::{BaseStrategy, choose_base_strategy};
 use serde::{Deserialize, Serialize};
@@ -11,8 +14,8 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    pub fn load_config() -> Result<AppConfig, ConfigError> {
-        let strategy = choose_base_strategy().expect("Unable to find the config directory!");
+    pub fn load_config() -> Result<AppConfig> {
+        let strategy = choose_base_strategy().context("Unable to find the config directory!")?;
         let mut path = strategy.config_dir();
         path.push("vento");
         path.push("config.yaml");
@@ -23,6 +26,15 @@ impl AppConfig {
 
         let builder = Config::builder().add_source(File::from(path));
 
-        builder.build()?.try_deserialize()
+        builder
+            .build()?
+            .try_deserialize()
+            .context("Failed to deserialize AppConfig")
+    }
+
+    pub fn over_ride_config(path: &str) -> Result<AppConfig> {
+        let yaml = fs::read_to_string(path)?;
+        let app_config: AppConfig = serde_yaml::from_str(&yaml)?;
+        Ok(app_config)
     }
 }

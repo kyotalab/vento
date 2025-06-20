@@ -1,4 +1,4 @@
-use std::{fs, str::FromStr as _};
+use std::{fs, path::Path, str::FromStr as _};
 
 use anyhow::{Error, Result, anyhow};
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub struct Profile {
 }
 
 impl Profile {
-    pub fn load_profiles(path: &str) -> Result<Profile> {
+    pub fn load_profiles(path: &Path) -> Result<Profile> {
         let yaml = fs::read_to_string(path)?;
         let profiles: Profile = serde_yaml::from_str(&yaml)?;
         Ok(profiles)
