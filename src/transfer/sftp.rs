@@ -6,6 +6,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dirs::home_dir;
+use log::{debug, error, info};
 use ssh2::{Session, Sftp};
 use ssh2_config::{ParseRule, SshConfig};
 use std::{
@@ -19,6 +20,18 @@ pub struct SftpHandler;
 
 impl TransferProtocolHandler for SftpHandler {
     fn send(&self, profile: &TransferProfile) -> Result<()> {
+        info!(
+            "Attempting to send file from '{}' to SFTP destination '{}'@{}:{}{}",
+            profile.source.path,
+            profile
+                .destination
+                .authentication
+                .as_ref()
+                .map_or("unknown", |a| a.username.as_str()),
+            profile.destination.host.as_deref().unwrap_or("localhost"),
+            profile.destination.port.unwrap_or(22),
+            profile.destination.path
+        );
         let sftp = connect_sftp_and_authenticate(
             profile.destination.authentication.as_ref(),
             profile.destination.host.as_deref(),
@@ -34,6 +47,18 @@ impl TransferProtocolHandler for SftpHandler {
     }
 
     fn receive(&self, profile: &TransferProfile) -> Result<()> {
+        info!(
+            "Attempting to receive file from SFTP source '{}'@{}:{}{} to local '{}'",
+            profile
+                .source
+                .authentication
+                .as_ref()
+                .map_or("unknown", |a| a.username.as_str()),
+            profile.source.host.as_deref().unwrap_or("localhost"),
+            profile.source.port.unwrap_or(22),
+            profile.source.path,
+            profile.destination.path
+        );
         let sftp = connect_sftp_and_authenticate(
             profile.source.authentication.as_ref(),
             profile.source.host.as_deref(),
@@ -82,6 +107,8 @@ fn connect_sftp_and_authenticate(
     let mut private_key_path: Option<PathBuf> = None;
     let mut password: Option<String> = None;
 
+    info!("Connecting to SFTP server: {}@{}:{}", username, host, port);
+
     match auth.method {
         AuthenticationMethod::Password => {
             password = auth.password_ref.as_ref().map(|ref_name| {
@@ -114,49 +141,137 @@ fn connect_sftp_and_authenticate(
                 if let Some(first) = identity_files.first() {
                     let path = PathBuf::from(first);
                     let resolved = if path.is_relative() {
-                        home_dir().context("No home dir")?.join(path)
+                        home_dir()
+                            .context("No home dir found for resolving relative path")?
+                            .join(&path)
                     } else {
                         path
                     };
+                    debug!(
+                        "Using identity file from SSH config: '{}'",
+                        resolved.display()
+                    );
                     private_key_path = Some(resolved);
+                } else {
+                    debug!("SSH config had identity_file entry but it was empty.");
                 }
+            } else {
+                debug!("SSH config did not specify identity_file.");
             }
+            info!(
+                "Resolved connection details via SSH config: User={}, Host={}, Port={}",
+                username, host, port
+            );
         }
     }
 
     let tcp = TcpStream::connect((host.clone(), port))
         .with_context(|| format!("Failed to connect to {}:{}", host, port))?;
+    info!("TCP connection established to {}:{}", host, port);
 
     let mut sess = Session::new()?;
     sess.set_tcp_stream(tcp);
-    sess.handshake()?;
+    sess.handshake().context("SSH handshake failed")?;
+    info!("SSH handshake successful.");
 
     if let Some(path) = private_key_path {
+        info!(
+            "Attempting public key authentication with key: '{}'",
+            path.display()
+        );
         sess.userauth_pubkey_file(&username, None, &path, None)
-            .with_context(|| format!("Private key auth failed for {}", username))?;
+            .with_context(|| {
+                format!(
+                    "Private key authentication failed for user '{}' using key '{}'",
+                    username,
+                    path.display()
+                )
+            })?;
     } else if let Some(pw) = password {
+        info!("Attempting password authentication.");
         sess.userauth_password(&username, &pw)
-            .with_context(|| format!("Password auth failed for {}", username))?;
+            .with_context(|| format!("Password authentication failed for user '{}'", username))?;
     } else {
+        error!(
+            "No suitable authentication method could be resolved for user '{}'.",
+            username
+        );
         return Err(AppError::AuthenticationFailed("No auth method resolved".into()).into());
     }
 
     if !sess.authenticated() {
+        error!(
+            "SFTP authentication failed for user '{}'. Session not authenticated.",
+            username
+        );
         return Err(AppError::AuthenticationFailed("SFTP authentication failed".into()).into());
     }
+    info!("SFTP authentication successful for user: '{}'.", username);
 
     Ok(sess.sftp()?)
 }
 
 fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
     if upload {
-        let mut local_file = File::open(src)?;
-        let mut remote_file = sftp.create(Path::new(dst))?;
-        copy(&mut local_file, &mut remote_file)?;
+        info!(
+            "Attempting to upload file from '{}' to remote path '{}'",
+            src.display(),
+            dst.display()
+        );
+        let mut local_file = File::open(src).with_context(|| {
+            format!(
+                "Failed to open local source file for upload: '{}'",
+                src.display()
+            )
+        })?;
+        let mut remote_file = sftp.create(Path::new(dst)).with_context(|| {
+            format!(
+                "Failed to create remote destination file for upload: '{}'",
+                dst.display()
+            )
+        })?;
+        copy(&mut local_file, &mut remote_file).with_context(|| {
+            format!(
+                "Failed to copy data during upload from '{}' to '{}'",
+                src.display(),
+                dst.display()
+            )
+        })?;
+        info!(
+            "Successfully uploaded file from '{}' to '{}'",
+            src.display(),
+            dst.display()
+        );
     } else {
-        let mut remote_file = sftp.open(Path::new(src))?;
-        let mut local_file = File::create(dst)?;
-        copy(&mut remote_file, &mut local_file)?;
+        info!(
+            "Attempting to download file from remote path '{}' to local path '{}'",
+            src.display(),
+            dst.display()
+        );
+        let mut remote_file = sftp.open(Path::new(src)).with_context(|| {
+            format!(
+                "Failed to open remote source file for download: '{}'",
+                src.display()
+            )
+        })?;
+        let mut local_file = File::create(dst).with_context(|| {
+            format!(
+                "Failed to create local destination file for download: '{}'",
+                dst.display()
+            )
+        })?;
+        copy(&mut remote_file, &mut local_file).with_context(|| {
+            format!(
+                "Failed to copy data during download from '{}' to '{}'",
+                src.display(),
+                dst.display()
+            )
+        })?;
+        info!(
+            "Successfully downloaded file from '{}' to '{}'",
+            src.display(),
+            dst.display()
+        );
     }
 
     Ok(())

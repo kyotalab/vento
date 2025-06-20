@@ -1,8 +1,9 @@
 use std::fs;
 
 use anyhow::{Context, Result};
-use config::{Config, ConfigError, File};
+use config::{Config, File};
 use etcetera::{BaseStrategy, choose_base_strategy};
+use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,7 +22,7 @@ impl AppConfig {
         path.push("config.yaml");
 
         if !path.exists() {
-            eprintln!("No config file found at: {}", path.display());
+            error!("No config file found at: {}", path.display());
         }
 
         let builder = Config::builder().add_source(File::from(path));
