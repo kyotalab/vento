@@ -3,6 +3,7 @@ pub mod config;
 pub mod error;
 pub mod profile;
 pub mod transfer;
+pub mod util;
 
 use anyhow::{Context, Result};
 pub use cli::*;
@@ -11,6 +12,7 @@ pub use error::*;
 use log::LevelFilter;
 pub use profile::*;
 pub use transfer::*;
+pub use util::*;
 
 pub fn setup_logging(app_config: &AppConfig) -> Result<()> {
     let level = app_config.log_level.as_deref().unwrap_or("info");

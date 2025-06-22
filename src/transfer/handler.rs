@@ -1,84 +1,9 @@
 use crate::{
     AppError, ProtocolType, SftpHandler, SourceType, TransferProfile, TransferProtocolHandler,
+    execute_command,
 };
-use anyhow::{Context, Result};
-use log::{debug, error, info, warn};
-use tokio::process::Command;
-
-// コマンドを実行するヘルパー関数
-// これを単一の関数として切り出すと、pre/post/on_error で再利用できます。
-async fn execute_command(command_str: &str, profile_id: &str, job_type: &str) -> Result<()> {
-    info!(
-        "Executing {} command for profile '{}': {}",
-        job_type, profile_id, command_str
-    );
-
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(command_str)
-        .output()
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to execute {} command for profile '{}'",
-                job_type, profile_id
-            )
-        })?;
-
-    // 標準出力と標準エラーの内容をトリムして文字列化
-    let stdout_trimmed = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let stderr_trimmed = String::from_utf8_lossy(&output.stderr).trim().to_string();
-
-    // 標準出力が空でない場合のみログに出力
-    if !stdout_trimmed.is_empty() {
-        // ここから `\n` を削除し、内容を同じ行に表示するように変更
-        debug!(
-            "{} command Stdout for profile '{}': {}",
-            job_type, profile_id, stdout_trimmed
-        );
-    } else {
-        // 出力が空の場合も、debugレベルでログを残すことでデバッグに役立つ
-        debug!(
-            "{} command Stdout for profile '{}' was empty.",
-            job_type, profile_id
-        );
-    }
-
-    // 標準エラーが空でない場合のみログに出力
-    if !stderr_trimmed.is_empty() {
-        // ここから `\n` を削除し、内容を同じ行に表示するように変更
-        warn!(
-            "{} command Stderr for profile '{}': {}",
-            job_type, profile_id, stderr_trimmed
-        );
-    } else {
-        // エラー出力が空の場合も、debugレベルでログを残す
-        debug!(
-            "{} command Stderr for profile '{}' was empty.",
-            job_type, profile_id
-        );
-    }
-
-    if !output.status.success() {
-        error!(
-            "{} command failed for profile '{}'. Code: {:?}",
-            job_type,
-            profile_id,
-            output.status.code()
-        );
-        return Err(anyhow::anyhow!(
-            "{} command failed for profile '{}'",
-            job_type,
-            profile_id
-        ));
-    } else {
-        info!(
-            "{} command completed successfully for profile '{}'.",
-            job_type, profile_id
-        );
-    }
-    Ok(())
-}
+use anyhow::Result;
+use log::{error, info};
 
 pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
     // 1. バリデーション
