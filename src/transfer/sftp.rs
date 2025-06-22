@@ -18,8 +18,9 @@ use std::{
 
 pub struct SftpHandler;
 
+#[async_trait::async_trait]
 impl TransferProtocolHandler for SftpHandler {
-    fn send(&self, profile: &TransferProfile) -> Result<()> {
+    async fn send(&self, profile: &TransferProfile) -> Result<()> {
         info!(
             "Attempting to send file from '{}' to SFTP destination '{}'@{}:{}{}",
             profile.source.path,
@@ -46,7 +47,7 @@ impl TransferProtocolHandler for SftpHandler {
         )
     }
 
-    fn receive(&self, profile: &TransferProfile) -> Result<()> {
+    async fn receive(&self, profile: &TransferProfile) -> Result<()> {
         info!(
             "Attempting to receive file from SFTP source '{}'@{}:{}{} to local '{}'",
             profile

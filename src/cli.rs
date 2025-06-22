@@ -21,7 +21,7 @@ pub enum Commands {
     },
 }
 
-pub fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
+pub async fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
     match cli.command {
         Commands::Transfer { profile_id } => {
             // 1. profile_id に該当する TransferProfile を探す
@@ -30,7 +30,7 @@ pub fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
                 .into_iter()
                 .find(|p| p.profile_id == profile_id)
             {
-                Some(profile) => process_transfer_profile(profile),
+                Some(profile) => process_transfer_profile(profile).await,
                 None => {
                     return Err(AppError::Validation(format!(
                         "Profile '{}' not found in config.yaml",

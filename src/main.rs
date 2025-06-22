@@ -5,7 +5,8 @@ use clap::Parser;
 use log::{error, info};
 use vento::{AppConfig, Cli, Profile, dispatch, setup_logging};
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
     let config_path = &cli.config;
 
@@ -28,7 +29,7 @@ fn main() -> Result<()> {
     info!("Using profile file: {}", profile_path);
     let profiles = Profile::load_profiles(Path::new(&profile_path))?;
 
-    let result = dispatch(cli, profiles);
+    let result = dispatch(cli, profiles).await;
 
     if let Err(e) = &result {
         error!("Application error: {:?}", e); // エラーをログに出力

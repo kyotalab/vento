@@ -1,7 +1,8 @@
 use crate::TransferProfile;
 use anyhow::Result;
 
+#[async_trait::async_trait]
 pub trait TransferProtocolHandler {
-    fn send(&self, profile: &TransferProfile) -> Result<()>;
-    fn receive(&self, profile: &TransferProfile) -> Result<()>;
+    async fn send(&self, profile: &TransferProfile) -> Result<()>;
+    async fn receive(&self, profile: &TransferProfile) -> Result<()>;
 }
