@@ -29,6 +29,7 @@ pub struct TransferProfile {
     pub transfer_protocol: TransferProtocol,
     pub pre_transfer_command: Option<String>,
     pub post_transfer_command: Option<String>,
+    pub on_error_command: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
