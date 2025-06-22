@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 use crate::{AppError, Profile, process_transfer_profile};
 
 #[derive(Debug, Parser)]
+#[command(author, version, about, long_about = None)]
 pub struct Cli {
     #[arg(short, long)]
     pub config: Option<String>,

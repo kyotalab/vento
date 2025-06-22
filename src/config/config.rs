@@ -7,7 +7,7 @@ use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     pub default_profile_file: Option<String>,
     pub log_level: Option<String>,
