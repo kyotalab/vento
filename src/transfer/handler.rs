@@ -16,10 +16,10 @@ pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
             "Executing pre-transfer command for profile '{}': {}",
             profile.profile_id, pre_job
         );
-        let status = Command::new("sh")
+        let output = Command::new("sh")
             .arg("-c")
             .arg(pre_job)
-            .status()
+            .output()
             .await
             .with_context(|| {
                 format!(
@@ -27,18 +27,27 @@ pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
                     profile.profile_id
                 )
             })?;
-        if !status.success() {
+        if !output.status.success() {
             error!(
-                "Pre-transfer command failed with status: {:?} for profile '{}'",
-                status.code(),
-                profile.profile_id
+                "Pre-transfer command failed for profile '{}'. Code: {:?}, Stdout: {}, Stderr: {}",
+                profile.profile_id,
+                output.status.code(),
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
             );
             return Err(anyhow::anyhow!("Pre-transfer command failed"));
+        } else {
+            debug!(
+                "Pre-transfer command Stdout for profile '{}': {}",
+                profile.profile_id,
+                String::from_utf8_lossy(&output.stdout)
+            );
+            debug!(
+                "Pre-transfer command Stderr for profile '{}': {}",
+                profile.profile_id,
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
-        info!(
-            "Pre-transfer command completed successfully for profile '{}'.",
-            profile.profile_id
-        );
     }
 
     // 2. プロトコルに応じた handler を選んで転送実行
