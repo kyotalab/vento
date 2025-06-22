@@ -35,7 +35,9 @@ pub struct TransferProfile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Source {
-    #[serde(rename = "type")] // YAMLの'type'キーをRustの'kind'フィールドにマッピング
+    // YAMLの'type'キーをRustの'kind'フィールドにマッピング
+    // Map YAML 'type' keys to Rust 'kind' fields
+    #[serde(rename = "type")]
     pub kind: SourceType,
     pub path: String,
     pub host: Option<String>,

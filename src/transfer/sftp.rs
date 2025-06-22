@@ -75,7 +75,8 @@ impl TransferProtocolHandler for SftpHandler {
     }
 }
 
-// 🔐 認証情報（秘密鍵）のパスを取得する関数（修正なし）
+// 認証情報（秘密鍵）のパスを取得する関数
+// Function to get the path of authentication information (private key)
 fn get_private_key_path(auth: &Authentication) -> Result<String, AppError> {
     if let Some(key_ref) = &auth.private_key_ref {
         match auth.method {

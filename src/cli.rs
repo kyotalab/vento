@@ -24,7 +24,8 @@ pub enum Commands {
 pub async fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
     match cli.command {
         Commands::Transfer { profile_id } => {
-            // 1. profile_id に該当する TransferProfile を探す
+            // profile_id に該当する TransferProfile を探す
+            // Find the TransferProfile that matches the profile_id
             match profiles
                 .transfer_profiles
                 .into_iter()

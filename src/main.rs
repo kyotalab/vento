@@ -11,6 +11,7 @@ async fn main() -> Result<()> {
     let config_path = &cli.config;
 
     // `--config` オプションが指定された場合は、参照するconfigファイルをオーバーライドする
+    // If the `--config` option is specified, it overrides the config file referenced.
     let app_config: AppConfig = if let Some(path) = config_path {
         AppConfig::over_ride_config(path)?
     } else {
@@ -32,7 +33,7 @@ async fn main() -> Result<()> {
     let result = dispatch(cli, profiles).await;
 
     if let Err(e) = &result {
-        error!("Application error: {:?}", e); // エラーをログに出力
+        error!("Application error: {:?}", e);
     }
 
     result
