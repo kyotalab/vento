@@ -2,6 +2,15 @@
 name = "vento"
 version = "0.1.0"
 edition = "2024"
+authors = ["Kyota <jagbvg.eptpeox@gmail.com>"]
+license = "MIT"
+description = "A command line tool for simple and fast file transfer and job coordination."
+readme = "README.md"
+homepage = "https://github.com/kyotalab/vento"
+repository = "https://github.com/kyotalab/vento"
+keywords = ["sftp", "cli", "transfer"]
+categories = ["command-line-utilities"]
+
 
 [dependencies]
 anyhow = "1.0.98"
