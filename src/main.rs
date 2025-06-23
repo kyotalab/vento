@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{error, info};
-use vento::{AppConfig, Cli, Profile, dispatch, setup_logging};
+use vento::{dispatch, setup_logging, AppConfig, Cli, Profile};
 
 #[tokio::main]
 async fn main() -> Result<()> {

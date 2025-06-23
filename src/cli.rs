@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use crate::{AppError, Profile, process_transfer_profile};
+use crate::{process_transfer_profile, AppError, Profile};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]

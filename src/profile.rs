@@ -1,6 +1,6 @@
 use std::{fs, path::Path, str::FromStr as _};
 
-use anyhow::{Error, Result, anyhow};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::AppError;
@@ -201,20 +201,26 @@ pub struct Destination {
 }
 
 impl Destination {
-    pub fn validate(&self) -> Result<(), Error> {
+    pub fn validate(&self) -> Result<(), AppError> {
         match self.kind {
             DestinationType::Local => {
                 println!("local")
             }
             DestinationType::Sftp => {
                 if self.host.is_none() {
-                    return Err(anyhow!("SFTP destination requires 'host'"));
+                    return Err(AppError::Validation(
+                        "SFTP destination requires 'host'".to_string(),
+                    ));
                 }
                 if self.port.is_none() {
-                    return Err(anyhow!("SFTP destination requires 'port'"));
+                    return Err(AppError::Validation(
+                        "SFTP destination requires 'port'".to_string(),
+                    ));
                 }
                 if self.authentication.is_none() {
-                    return Err(anyhow!("SFTP destination requires 'authentication'"));
+                    return Err(AppError::Validation(
+                        "SFTP destination requires 'authentication'".to_string(),
+                    ));
                 } else {
                     self.authentication.as_ref().unwrap().validate()?;
                 }

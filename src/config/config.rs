@@ -2,7 +2,7 @@ use std::fs;
 
 use anyhow::{Context, Result};
 use config::{Config, File};
-use etcetera::{BaseStrategy, choose_base_strategy};
+use etcetera::{choose_base_strategy, BaseStrategy};
 use log::error;
 use serde::{Deserialize, Serialize};
 
