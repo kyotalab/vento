@@ -42,7 +42,7 @@ Homebrew がインストールされている場合、以下のコマンドで V
 
 ```bash
 # Vento の Homebrew Tap を追加
-brew tap your_github_username/vento
+brew tap kyotalab/vento
 
 # Vento をインストール
 brew install vento
@@ -136,12 +136,21 @@ transferProfiles:
       protocol: "SFTP"
 ```
 
+**⚠️ スケジュールトリガー (`trigger.type: schedule`) に関する注意点**
+
+`trigger.type: schedule` を設定した場合、Vento は `schedule` フィールドに指定された Cron 式の**妥当性を検証**しますが、**Vento 自身がその Cron 式を解釈して定期的にプロセスを起動する機能は持っていません。**
+
+この `schedule` 定義は、あくまで「このファイル転送プロファイルは、外部のスケジューラ（例: OS の `cron`、`systemd timer`、Windows タスクスケジューラ、Kubernetes の CronJob など）によって定期的に実行されることを意図している」という**メタデータ**として機能します。
+
+Vento のプロセスを定期実行する場合は、お使いの環境に応じた外部のスケジューリングツールをご利用いただき、Vento コマンド (`vento transfer --profile-id <your-profile-id>`) を呼び出すように設定してください。
+
 
 **⚠️ カスタムコマンドの OS 依存性に関する注意**
 `preTransferCommand`, `postTransferCommand`, `onErrorCommand` に記述するコマンド文字列は、Vento が実行される OS のシェルに互換性がある必要があります。
 - Linux / macOS: `sh -c "あなたのコマンド"` の形式で実行されます。Unix シェル（`ls`, `mv`, `echo`, `&&` など）の構文が利用可能です。
 Windows: `cmd.exe /C "あなたのコマンド`" の形式で実行されます。Windows コマンドプロンプト（`dir`, `move`, `echo`, `&&` など）の構文が利用可能です。
 異なる OS で同じプロファイルIDを使用する場合は、それぞれの OS で動作するコマンドを記述するか、OS ごとに異なる profileId を用意することを検討してください。
+
 
 2. **環境変数の設定**
 認証情報に `privateKeyRef` や `passwordRef` を使用する場合、対応する環境変数を設定してください。
