@@ -32,7 +32,7 @@ Vento は、以下の方法でインストールできます。
 
 最も手軽な方法です。Rust 環境のセットアップは不要です。
 
-1.  [Vento GitHub Releases ページ](https://github.com/your-username/vento/releases/tag/v0.1.0) にアクセスします。
+1.  [Vento GitHub Releases ページ](https://github.com/kyotalab/vento/releases/tag/v0.1.0) にアクセスします。
 2.  ご使用の OS およびアーキテクチャに対応するバイナリをダウンロードします (例: `vento-x86_64-apple-darwin.tar.gz` for macOS, `vento-x86_64-unknown-linux-gnu.tar.gz` for Linux, `vento-x86_64-pc-windows-msvc.zip` for Windows)。
 3.  ダウンロードしたファイルを解凍し、実行ファイル (`vento` または `vento.exe`) をパスが通っているディレクトリ (例: `/usr/local/bin` や Windows の `C:\Windows`) に配置します。
 
@@ -53,7 +53,7 @@ brew install vento
 Rust の開発環境が既にセットアップされている場合、ソースコードからビルドできます。
 1. Vento リポジトリをクローンします。
 ```bash
-git clone [https://github.com/your-username/vento.git](https://github.com/your-username/vento.git)
+git clone [https://github.com/kyotalab/vento.git](https://github.com/kyotalab/vento.git)
 cd vento
 ```
 
@@ -79,6 +79,7 @@ Vento は YAML 形式の設定ファイル `config.yaml` と `profiles.yaml` を
 defaultProfileFile: "/path/to/your/profiles.yaml" # 転送プロファイル定義ファイルへのパス
 logLevel: "info" # ログレベル: trace, debug, info, warn, error (デフォルト: info)
 logFile: "/var/log/vento.log" # ログ出力先ファイル (省略時は標準出力のみ)
+logStdout: false # ログをファイルにのみ出力　（デフォルト: true(ファイルと標準出力)）
 ```
 
 **`profiles.yaml` (転送プロファイルの定義)**
@@ -91,17 +92,23 @@ transferProfiles:
   - profileId: "daily-report-sftp"
     description: "日次レポートをSFTPサーバーにアップロードするプロファイル"
     source:
-      type: "local"
+      type: "local" # or sttp
       path: "/Users/youruser/reports/daily_report.csv"
+      trigger:
+        type: "manual"
+        # schedule: "0 0 * * * *"
     destination:
-      type: "sftp"
-      path: "/incoming/reports/daily_report.csv"
+      type: "sftp" # or local
       host: "sftp.example.com"
       port: 22
+      path: "/incoming/reports/daily_report.csv"
       authentication:
-        method: "private_key"
+        method: "env_key" # or password, private_key, ssh_config
         username: "sftpuser"
-        privateKeyRef: "SFTP_PRIVATE_KEY_PATH" # 環境変数名。ここに秘密鍵のパスを設定
+        envKeyRef: "SFTP_PRIVATE_KEY_PATH" # 環境変数名。ここに秘密鍵のパスを設定
+        # passwordRef: "SFTP_PASSWORD"
+        # privateKeyRef: "SFTP_PRIVATE_KEY_PATH"
+        # sshConfigAlias: "my_sftp_server_alias"
     transferProtocol:
       protocol: "SFTP"
     preTransferCommand: "echo '転送を開始します...' && ls -l /Users/youruser/reports/"
@@ -113,6 +120,9 @@ transferProfiles:
     source:
       type: "sftp"
       path: "/outgoing/archive.zip"
+      trigger:
+        type: "manual" # or schedule
+        # schedule: "0 0 * * * *"
       host: "sftp.example.com"
       port: 22
       authentication:
@@ -203,4 +213,4 @@ Vento はまだ初期段階のプロジェクトですが、将来的には以�
 ## 貢献
 Vento の開発にご興味をお持ちいただきありがとうございます。バグ報告、機能リクエスト、コードの改善提案など、どのような形でも貢献を歓迎します。
 ライセンス
-Vento は MIT License の下で公開されています。
+Vento は [MIT License](./LICENSE) の下で公開されています。
