@@ -24,7 +24,7 @@ Vento は、シンプルで高速なファイル転送とジョブ連携を目�
 
 ---
 
-## インストール（検討中）
+## インストール
 
 Vento は、以下の方法でインストールできます。
 
@@ -53,7 +53,7 @@ brew install vento
 Rust の開発環境が既にセットアップされている場合、ソースコードからビルドできます。
 1. Vento リポジトリをクローンします。
 ```bash
-git clone [https://github.com/kyotalab/vento.git](https://github.com/kyotalab/vento.git)
+git clone https://github.com/kyotalab/vento.git
 cd vento
 ```
 
