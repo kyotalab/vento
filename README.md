@@ -1,11 +1,5 @@
 # Vento
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Rust-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust">
-  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/Version-0.1.0-blue.svg" alt="Version: 0.1.0">
-</p>
-
 ## はじめに
 
 Vento は、シンプルで高速なファイル転送とジョブ連携を目的としたコマンドラインツールです。設定ファイル（YAML）一つで転送プロファイルを定義し、ローカルファイルシステムと SFTP サーバー間でのファイル転送を自動化できます。転送前後の処理や、異常時のジョブ実行にも対応しており、バッチ処理におけるファイル連携の自動化に貢献します。
@@ -223,3 +217,5 @@ Vento はまだ初期段階のプロジェクトですが、将来的には以�
 Vento の開発にご興味をお持ちいただきありがとうございます。バグ報告、機能リクエスト、コードの改善提案など、どのような形でも貢献を歓迎します。
 ライセンス
 Vento は [MIT License](./LICENSE) の下で公開されています。
+
+
