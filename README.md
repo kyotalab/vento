@@ -1,4 +1,9 @@
-# Vento
+<div align="center">
+<h1 style="display: flex; align-items: center; gap: 16px;">
+  <img alt="Vento" height="160" src="logo.svg">
+</h1>
+</div>
+
 
 ## はじめに
 
