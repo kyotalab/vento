@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub log_level: Option<String>,
     pub log_file: Option<String>,
     pub log_stdout: Option<bool>,
+    pub max_file_size_mb: Option<u64>,
 }
 
 impl AppConfig {

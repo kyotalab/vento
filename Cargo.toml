@@ -22,7 +22,9 @@ cron = "0.15.0"
 dirs = "6.0.0"
 etcetera = "0.10.0"
 fern = "0.7.1"
+lazy_static = "1.5.0"
 log = "0.4.27"
+regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_yaml = "0.9.34"
 ssh2 = "0.9.5"
@@ -30,3 +32,4 @@ ssh2-config = "0.5.4"
 tempfile = "3.20.0"
 thiserror = "2.0.12"
 tokio = { version = "1.45.1", features = ["full"] }
+validator = { version = "0.20.0", features = ["derive"]}

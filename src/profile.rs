@@ -2,8 +2,9 @@ use std::{fs, path::Path, str::FromStr};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-use crate::AppError;
+use crate::{AppError, validate_ascii, validate_cross_platform_path};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,27 +20,48 @@ impl Profile {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferProfile {
+    #[validate(length(min = 1, max = 32), regex(path = "*PROFILE_ID_REGEX"))]
     pub profile_id: String,
+
+    #[validate(length(max = 128))]
     pub description: Option<String>,
+
     pub source: Source,
     pub destination: Destination,
     pub transfer_protocol: TransferProtocol,
+    
+    #[validate(length(min = 1, max = 256))]
+    #[validate(custom(function = "validate_ascii"))]
     pub pre_transfer_command: Option<String>,
+
+    #[validate(length(min = 1, max = 256))]
+    #[validate(custom(function = "validate_ascii"))]
     pub post_transfer_command: Option<String>,
+
+    #[validate(length(min = 1, max = 256))]
+    #[validate(custom(function = "validate_ascii"))]
     pub on_error_command: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+lazy_static::lazy_static! {
+    static ref PROFILE_ID_REGEX: regex::Regex = regex::Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct Source {
     // YAMLの'type'キーをRustの'kind'フィールドにマッピング
     // Map YAML 'type' keys to Rust 'kind' fields
     #[serde(rename = "type")]
     pub kind: SourceType,
+
+    #[validate(custom(function = "validate_cross_platform_path"))]
     pub path: String,
+
     pub host: Option<String>,
     pub port: Option<u16>,
     pub authentication: Option<Authentication>,
@@ -209,12 +231,15 @@ pub enum TriggerType {
     Schedule,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct Destination {
     #[serde(rename = "type")] // YAMLの'type'キーをRustの'kind'フィールドにマッピング
     pub kind: DestinationType,
+
+    #[validate(custom(function = "validate_cross_platform_path"))]
     pub path: String,
+
     pub host: Option<String>,
     pub port: Option<u16>,
     pub authentication: Option<Authentication>,
