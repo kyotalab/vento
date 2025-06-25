@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{AppError, validate_ascii, validate_cross_platform_path};
+use crate::{validate_ascii, validate_cross_platform_path, AppError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,7 +32,7 @@ pub struct TransferProfile {
     pub source: Source,
     pub destination: Destination,
     pub transfer_protocol: TransferProtocol,
-    
+
     #[validate(length(min = 1, max = 256))]
     #[validate(custom(function = "validate_ascii"))]
     pub pre_transfer_command: Option<String>,
@@ -49,7 +49,6 @@ pub struct TransferProfile {
 lazy_static::lazy_static! {
     static ref PROFILE_ID_REGEX: regex::Regex = regex::Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -317,10 +316,10 @@ pub enum ProtocolType {
 }
 
 impl ToString for ProtocolType {
-   fn to_string(&self) -> String {
+    fn to_string(&self) -> String {
         match self {
             ProtocolType::Sftp => "SFTP".into(),
             ProtocolType::Scp => "SCP".into(),
         }
-    } 
+    }
 }

@@ -24,7 +24,9 @@ pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
                 SourceType::Local => handler.send(&profile).await,
                 SourceType::Sftp => handler.receive(&profile).await,
                 _ => {
-                    return Err(AppError::Validation("Unsupported transfer source type".into()).into());
+                    return Err(
+                        AppError::Validation("Unsupported transfer source type".into()).into(),
+                    );
                 }
             }
         }
@@ -37,13 +39,14 @@ pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
                 SourceType::Local => handler.send(&profile).await,
                 SourceType::Scp => handler.receive(&profile).await,
                 _ => {
-                    return Err(AppError::Validation("Unsupported transfer source type".into()).into());
+                    return Err(
+                        AppError::Validation("Unsupported transfer source type".into()).into(),
+                    );
                 }
             }
-        }
-        // _ => {
-        //     return Err(AppError::Validation("Unsupported transfer protocol".into()).into());
-        // }
+        } // _ => {
+          //     return Err(AppError::Validation("Unsupported transfer protocol".into()).into());
+          // }
     };
 
     // Execute post transfer or on-error command

@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
         AppConfig::load_config().context("Failed to load default application configuration")?
     };
 
-    let mut max_file_size_mb = MAX_FILE_SIZE_MB.write().unwrap();
+    let mut max_file_size_mb = MAX_FILE_SIZE_MB.write().await;
     let max = &app_config.max_file_size_mb.unwrap_or(500);
     *max_file_size_mb = *max;
 

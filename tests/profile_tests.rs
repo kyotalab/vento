@@ -1,11 +1,10 @@
-
-use tempfile::NamedTempFile;
 use std::io::Write;
+use tempfile::NamedTempFile;
 
-use vento::{Profile, AppError}; // 適宜クレート名を変更
-use vento::SourceType;
 use vento::AuthenticationMethod;
+use vento::SourceType;
 use vento::TriggerType;
+use vento::{AppError, Profile}; // 適宜クレート名を変更
 
 #[test]
 fn test_load_valid_profile_yaml() {
@@ -45,7 +44,7 @@ transferProfiles:
 
 #[test]
 fn test_invalid_sftp_source_missing_host() {
-    use vento::{Source, Authentication, Trigger};
+    use vento::{Authentication, Source, Trigger};
 
     let source = Source {
         kind: SourceType::Sftp,

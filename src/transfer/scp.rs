@@ -38,7 +38,8 @@ impl TransferProtocolHandler for ScpHandler {
             &session,
             &profile.source.path.clone().into(),
             &profile.destination.path.clone().into(),
-            true)
+            true
+        ).await
 
     }
 
@@ -70,15 +71,16 @@ impl TransferProtocolHandler for ScpHandler {
             &profile.source.path.clone().into(),
             &profile.destination.path.clone().into(),
             false
-        )
+        ).await
     }
 }
 
-fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
+async fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
     use crate::MAX_FILE_SIZE_MB;
     use super::DEFAULT_BUFFER_SIZE;
 
-    let max_mb = *MAX_FILE_SIZE_MB.read().unwrap();
+    println!("scp start");
+//    let max_mb = *MAX_FILE_SIZE_MB.read().await;
     if upload {
         info!(
             "Attempting to upload file from '{}' to remote path '{}'",
@@ -94,14 +96,14 @@ fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bo
 
         let metadata = local_file.metadata()?;
         let file_size = metadata.len();
-        let max_size_bytes = max_mb * 1024 * 1024;
-        if file_size > max_size_bytes {
-            return Err(anyhow!(
-                "File '{}' exceeds max allowed size ({} MB)",
-                src.display(),
-                max_size_bytes / 1024 / 1024
-            ));
-        }
+//        let max_size_bytes = max_mb * 1024 * 1024;
+//        if file_size > max_size_bytes {
+//            return Err(anyhow!(
+//                "File '{}' exceeds max allowed size ({} MB)",
+//                src.display(),
+//                max_size_bytes / 1024 / 1024
+//            ));
+//        }
 
         let mut remote_file = session.scp_send(Path::new(dst), 0o644, file_size, None).with_context(|| {
             format!(
@@ -144,16 +146,16 @@ fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bo
             )
         })?;
 
-        let file_size = stat.size(); // ファイルサイズ (u64)
-        let max_size_bytes = max_mb * 1024 * 1024;
-
-        if file_size > max_size_bytes {
-            return Err(anyhow!(
-                "Remote file '{}' exceeds max allowed size ({} MB)",
-                src.display(),
-                max_size_bytes / 1024 / 1024
-            ));
-        }
+//        let file_size = stat.size(); // ファイルサイズ (u64)
+//        let max_size_bytes = max_mb * 1024 * 1024;
+//
+//        if file_size > max_size_bytes {
+//            return Err(anyhow!(
+//                "Remote file '{}' exceeds max allowed size ({} MB)",
+//                src.display(),
+//                max_size_bytes / 1024 / 1024
+//            ));
+//        }
         
         let mut local_file = File::create(dst)?;
         let mut reader = BufReader::with_capacity(DEFAULT_BUFFER_SIZE, remote_file); // 8MB buffer

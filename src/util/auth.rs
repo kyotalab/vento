@@ -1,14 +1,10 @@
-use crate::{
-    error::AppError,Authentication, AuthenticationMethod
-};
+use crate::{error::AppError, Authentication, AuthenticationMethod};
 use anyhow::{Context, Result};
 use dirs::home_dir;
 use log::{debug, error, info};
 use ssh2::Session;
 use ssh2_config::{ParseRule, SshConfig};
-use std::{
-    net::TcpStream, path::PathBuf
-};
+use std::{net::TcpStream, path::PathBuf};
 
 // 認証情報（秘密鍵）のパスを取得する関数
 // Function to get the path of authentication information (private key)
@@ -45,7 +41,10 @@ pub fn connect_session_and_authenticate(
     let mut private_key_path: Option<PathBuf> = None;
     let mut password: Option<String> = None;
 
-    info!("Connecting to {} server: {}@{}:{}", protocol, username, host, port);
+    info!(
+        "Connecting to {} server: {}@{}:{}",
+        protocol, username, host, port
+    );
 
     match auth.method {
         AuthenticationMethod::Password => {
@@ -140,12 +139,16 @@ pub fn connect_session_and_authenticate(
     if !sess.authenticated() {
         error!(
             "{} authentication failed for user '{}'. Session not authenticated.",
-            protocol,
-            username
+            protocol, username
         );
-        return Err(AppError::AuthenticationFailed(format!("{} authentication failed", protocol)).into());
+        return Err(
+            AppError::AuthenticationFailed(format!("{} authentication failed", protocol)).into(),
+        );
     }
-    info!("{} authentication successful for user: '{}'.", protocol ,username);
+    info!(
+        "{} authentication successful for user: '{}'.",
+        protocol, username
+    );
 
     Ok(sess)
 }

@@ -1,5 +1,5 @@
 use std::env;
-use vento::{AppError, Authentication, AuthenticationMethod, get_private_key_path};
+use vento::{get_private_key_path, AppError, Authentication, AuthenticationMethod};
 
 #[test]
 fn test_get_private_key_path_envkey_success() {

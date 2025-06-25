@@ -1,4 +1,3 @@
-
 use vento::*;
 
 fn valid_auth() -> Authentication {
@@ -79,7 +78,9 @@ fn test_authentication_password_missing_password_ref() {
         ssh_config_alias: None,
     };
     let result = auth.validate();
-    assert!(matches!(result, Err(AppError::AuthenticationFailed(msg)) if msg.contains("passwordRef")));
+    assert!(
+        matches!(result, Err(AppError::AuthenticationFailed(msg)) if msg.contains("passwordRef"))
+    );
 }
 
 #[test]

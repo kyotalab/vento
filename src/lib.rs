@@ -5,20 +5,21 @@ pub mod profile;
 pub mod transfer;
 pub mod util;
 
-use std::sync::RwLock;
+use lazy_static::lazy_static;
+use tokio::sync::RwLock;
 
 use anyhow::{Context, Result};
 pub use cli::*;
 pub use config::*;
 pub use error::*;
 use log::LevelFilter;
-use once_cell::sync::Lazy;
 pub use profile::*;
 pub use transfer::*;
 pub use util::*;
 
-
-pub static MAX_FILE_SIZE_MB: Lazy<RwLock<u64>> = Lazy::new(|| RwLock::new(0));
+lazy_static! {
+    pub static ref MAX_FILE_SIZE_MB: RwLock<u64> = RwLock::new(8);
+}
 
 pub fn setup_logging(app_config: &AppConfig) -> Result<()> {
     let level = app_config.log_level.as_deref().unwrap_or("info");
