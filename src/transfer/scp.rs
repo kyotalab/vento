@@ -6,22 +6,20 @@ use crate::{
 use anyhow::{Context, Result};
 use dirs::home_dir;
 use log::{debug, error, info};
-use ssh2::{Session, Sftp};
+use ssh2::Session;
 use ssh2_config::{ParseRule, SshConfig};
 use std::{
-    fs::File,
-    io::copy,
     net::TcpStream,
     path::{Path, PathBuf},
 };
 
-pub struct SftpHandler;
+pub struct ScpHandler;
 
 #[async_trait::async_trait]
-impl TransferProtocolHandler for SftpHandler {
+impl TransferProtocolHandler for ScpHandler {
     async fn send(&self, profile: &TransferProfile) -> Result<()> {
         info!(
-            "Attempting to send file from '{}' to SFTP destination '{}'@{}:{}{}",
+            "Attempting to send file from '{}' to SCP destination '{}'@{}:{}{}",
             profile.source.path,
             profile
                 .destination
@@ -32,23 +30,22 @@ impl TransferProtocolHandler for SftpHandler {
             profile.destination.port.unwrap_or(22),
             profile.destination.path
         );
-        let sftp = connect_sftp_and_authenticate(
+        let session = connect_scp_and_authenticate(
             profile.destination.authentication.as_ref(),
             profile.destination.host.as_deref(),
             profile.destination.port,
         )?;
 
-        transfer_file_sftp(
-            &sftp,
-            &profile.source.path.clone().into(),
-            &profile.destination.path.clone().into(),
-            true, // upload
-        )
+        session.scp_send(Path::new(&profile.destination.path), 0o644, 10, None)?;
+        // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
+        // The file transfer timeout is set to 10 seconds.
+        // No special callback processing is performed during file transfer.
+        Ok(())
     }
 
     async fn receive(&self, profile: &TransferProfile) -> Result<()> {
         info!(
-            "Attempting to receive file from SFTP source '{}'@{}:{}{} to local '{}'",
+            "Attempting to receive file from SCP source '{}'@{}:{}{} to local '{}'",
             profile
                 .source
                 .authentication
@@ -59,26 +56,23 @@ impl TransferProtocolHandler for SftpHandler {
             profile.source.path,
             profile.destination.path
         );
-        let sftp = connect_sftp_and_authenticate(
+
+        let session = connect_scp_and_authenticate(
             profile.source.authentication.as_ref(),
             profile.source.host.as_deref(),
             profile.source.port,
         )?;
 
-        transfer_file_sftp(
-            &sftp,
-            &profile.source.path.clone().into(),
-            &profile.destination.path.clone().into(),
-            false, // download
-        )
+        session.scp_recv(Path::new(&profile.source.path))?;
+        Ok(())
     }
 }
 
-fn connect_sftp_and_authenticate(
+fn connect_scp_and_authenticate(
     auth: Option<&Authentication>,
     host_opt: Option<&str>,
     port_opt: Option<u16>,
-) -> Result<Sftp> {
+) -> Result<Session> {
     let auth = auth.ok_or(AppError::AuthenticationFailed("Missing auth".into()))?;
 
     let mut host = host_opt.unwrap_or("localhost").to_string();
@@ -181,78 +175,12 @@ fn connect_sftp_and_authenticate(
 
     if !sess.authenticated() {
         error!(
-            "SFTP authentication failed for user '{}'. Session not authenticated.",
+            "SCP authentication failed for user '{}'. Session not authenticated.",
             username
         );
-        return Err(AppError::AuthenticationFailed("SFTP authentication failed".into()).into());
+        return Err(AppError::AuthenticationFailed("SCP authentication failed".into()).into());
     }
-    info!("SFTP authentication successful for user: '{}'.", username);
+    info!("SCP authentication successful for user: '{}'.", username);
 
-    Ok(sess.sftp()?)
-}
-
-fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
-    if upload {
-        info!(
-            "Attempting to upload file from '{}' to remote path '{}'",
-            src.display(),
-            dst.display()
-        );
-        let mut local_file = File::open(src).with_context(|| {
-            format!(
-                "Failed to open local source file for upload: '{}'",
-                src.display()
-            )
-        })?;
-        let mut remote_file = sftp.create(Path::new(dst)).with_context(|| {
-            format!(
-                "Failed to create remote destination file for upload: '{}'",
-                dst.display()
-            )
-        })?;
-        copy(&mut local_file, &mut remote_file).with_context(|| {
-            format!(
-                "Failed to copy data during upload from '{}' to '{}'",
-                src.display(),
-                dst.display()
-            )
-        })?;
-        info!(
-            "Successfully uploaded file from '{}' to '{}'",
-            src.display(),
-            dst.display()
-        );
-    } else {
-        info!(
-            "Attempting to download file from remote path '{}' to local path '{}'",
-            src.display(),
-            dst.display()
-        );
-        let mut remote_file = sftp.open(Path::new(src)).with_context(|| {
-            format!(
-                "Failed to open remote source file for download: '{}'",
-                src.display()
-            )
-        })?;
-        let mut local_file = File::create(dst).with_context(|| {
-            format!(
-                "Failed to create local destination file for download: '{}'",
-                dst.display()
-            )
-        })?;
-        copy(&mut remote_file, &mut local_file).with_context(|| {
-            format!(
-                "Failed to copy data during download from '{}' to '{}'",
-                src.display(),
-                dst.display()
-            )
-        })?;
-        info!(
-            "Successfully downloaded file from '{}' to '{}'",
-            src.display(),
-            dst.display()
-        );
-    }
-
-    Ok(())
+    Ok(sess)
 }
