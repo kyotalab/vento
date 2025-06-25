@@ -71,6 +71,25 @@ impl Source {
                     self.authentication.as_ref().unwrap().validate()?;
                 }
             }
+            SourceType::Scp => {
+                if self.host.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP source requires 'host'".to_string(),
+                    ));
+                }
+                if self.port.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP source requires 'port'".to_string(),
+                    ));
+                }
+                if self.authentication.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP source requires 'authentication'".to_string(),
+                    ));
+                } else {
+                    self.authentication.as_ref().unwrap().validate()?;
+                }
+            }
         }
 
         match self.trigger.kind {
@@ -130,6 +149,7 @@ impl Authentication {
 pub enum SourceType {
     Local,
     Sftp,
+    Scp,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -225,6 +245,25 @@ impl Destination {
                     self.authentication.as_ref().unwrap().validate()?;
                 }
             }
+            DestinationType::Scp => {
+                if self.host.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP destination requires 'host'".to_string(),
+                    ));
+                }
+                if self.port.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP destination requires 'port'".to_string(),
+                    ));
+                }
+                if self.authentication.is_none() {
+                    return Err(AppError::Validation(
+                        "SCP destination requires 'authentication'".to_string(),
+                    ));
+                } else {
+                    self.authentication.as_ref().unwrap().validate()?;
+                }
+            }
         }
 
         Ok(())
@@ -236,6 +275,7 @@ impl Destination {
 pub enum DestinationType {
     Local,
     Sftp,
+    Scp,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -248,4 +288,5 @@ pub struct TransferProtocol {
 #[serde(rename_all = "UPPERCASE")]
 pub enum ProtocolType {
     Sftp,
+    Scp,
 }

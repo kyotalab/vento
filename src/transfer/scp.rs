@@ -9,8 +9,7 @@ use log::{debug, error, info};
 use ssh2::Session;
 use ssh2_config::{ParseRule, SshConfig};
 use std::{
-    net::TcpStream,
-    path::{Path, PathBuf},
+    fs::File, io::{Read, Write}, net::TcpStream, path::{Path, PathBuf}
 };
 
 pub struct ScpHandler;
@@ -36,10 +35,19 @@ impl TransferProtocolHandler for ScpHandler {
             profile.destination.port,
         )?;
 
-        session.scp_send(Path::new(&profile.destination.path), 0o644, 10, None)?;
+        let mut remote_file = session.scp_send(Path::new(&profile.destination.path), 0o644, 10, None)?;
         // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
         // The file transfer timeout is set to 10 seconds.
         // No special callback processing is performed during file transfer.
+        println!("start writing");
+        remote_file.write_all(b"1234567890").unwrap();
+        // Close the channel and wait for the whole content to be transferred
+        remote_file.send_eof().unwrap();
+        remote_file.wait_eof().unwrap();
+        remote_file.close().unwrap();
+        remote_file.wait_close().unwrap();
+
+        println!("end");
         Ok(())
     }
 
@@ -63,7 +71,20 @@ impl TransferProtocolHandler for ScpHandler {
             profile.source.port,
         )?;
 
-        session.scp_recv(Path::new(&profile.source.path))?;
+        let (mut remote_file, _) = session.scp_recv(Path::new(&profile.source.path))?;
+        let mut contents = Vec::new();
+        remote_file.read_to_end(&mut contents)?;
+        // Close the channel and wait for the whole content to be transferred
+        remote_file.send_eof()?;
+        remote_file.wait_eof()?;
+        remote_file.close()?;
+        remote_file.wait_close()?;
+
+        // Write contents to local file
+        let local_path = PathBuf::from(&profile.destination.path);
+        let mut file = File::create(&local_path)?;
+        file.write_all(&contents)?;
+
         Ok(())
     }
 }
@@ -81,7 +102,7 @@ fn connect_scp_and_authenticate(
     let mut private_key_path: Option<PathBuf> = None;
     let mut password: Option<String> = None;
 
-    info!("Connecting to SFTP server: {}@{}:{}", username, host, port);
+    info!("Connecting to SCP server: {}@{}:{}", username, host, port);
 
     match auth.method {
         AuthenticationMethod::Password => {

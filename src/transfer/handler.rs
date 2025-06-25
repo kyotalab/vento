@@ -1,5 +1,5 @@
 use crate::{
-    execute_command, AppError, ProtocolType, SftpHandler, SourceType, TransferProfile,
+    execute_command, AppError, ProtocolType, ScpHandler, SftpHandler, SourceType, TransferProfile,
     TransferProtocolHandler,
 };
 use anyhow::Result;
@@ -23,17 +23,27 @@ pub async fn process_transfer_profile(profile: TransferProfile) -> Result<()> {
             match profile.source.kind {
                 SourceType::Local => handler.send(&profile).await,
                 SourceType::Sftp => handler.receive(&profile).await,
+                _ => {
+                    return Err(AppError::Validation("Unsupported transfer source type".into()).into());
+                }
             }
         }
         // 将来のプロトコル（例：Scp, Httpなど）
         // Future protocols (e.g. Scp, Http, etc.)
-        // TransferProtocolType::Scp => {
-        //     let handler = ScpHandler;
-        //     handler.send(&profile)?;
-        // }
-        _ => {
-            return Err(AppError::Validation("Unsupported transfer protocol".into()).into());
+        ProtocolType::Scp => {
+            let handler = ScpHandler;
+
+            match profile.source.kind {
+                SourceType::Local => handler.send(&profile).await,
+                SourceType::Scp => handler.receive(&profile).await,
+                _ => {
+                    return Err(AppError::Validation("Unsupported transfer source type".into()).into());
+                }
+            }
         }
+        // _ => {
+        //     return Err(AppError::Validation("Unsupported transfer protocol".into()).into());
+        // }
     };
 
     // Execute post transfer or on-error command
