@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{error, info};
-use vento::{dispatch, setup_logging, AppConfig, Cli, Profile};
+use vento::{dispatch, setup_logging, AppConfig, Cli, Profile, MAX_FILE_SIZE_MB};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -17,6 +17,10 @@ async fn main() -> Result<()> {
     } else {
         AppConfig::load_config().context("Failed to load default application configuration")?
     };
+
+    let mut max_file_size_mb = MAX_FILE_SIZE_MB.write().unwrap();
+    let max = &app_config.max_file_size_mb.unwrap_or(500);
+    *max_file_size_mb = *max;
 
     let profile_path = &app_config.default_profile_file;
     if profile_path.is_none() {

@@ -1,7 +1,7 @@
 use crate::{
     connect_session_and_authenticate, transfer::protocol::TransferProtocolHandler, TransferProfile
 };
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use log::info;
 use ssh2::Sftp;
 use std::{
@@ -78,6 +78,9 @@ impl TransferProtocolHandler for SftpHandler {
 }
 
 fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
+    use crate::MAX_FILE_SIZE_MB;
+
+    let max_mb = *MAX_FILE_SIZE_MB.read().unwrap();
     if upload {
         info!(
             "Attempting to upload file from '{}' to remote path '{}'",
@@ -90,6 +93,18 @@ fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -
                 src.display()
             )
         })?;
+
+        let metadata = local_file.metadata()?;
+        let file_size = metadata.len();
+        let max_size_bytes = max_mb * 1024 * 1024;
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "File '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
+
         let mut remote_file = sftp.create(Path::new(dst)).with_context(|| {
             format!(
                 "Failed to create remote destination file for upload: '{}'",
@@ -120,6 +135,18 @@ fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -
                 src.display()
             )
         })?;
+
+        let stat = remote_file.stat()?;
+        let file_size = stat.size.ok_or_else(|| anyhow!("Unable to get size of remote file"))?;
+        let max_size_bytes = max_mb * 1024 * 1024;
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "File '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
+
         let mut local_file = File::create(dst).with_context(|| {
             format!(
                 "Failed to create local destination file for download: '{}'",

@@ -1,11 +1,11 @@
 use crate::{
     connect_session_and_authenticate, transfer::protocol::TransferProtocolHandler, TransferProfile
 };
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use log::info;
 use ssh2::Session;
 use std::{
-    fs::{read_to_string, File}, io::{Read, Write}, path::{Path, PathBuf}
+    fs::File, io::{copy, BufReader}, path::{Path, PathBuf}
 };
 
 pub struct ScpHandler;
@@ -74,21 +74,36 @@ impl TransferProtocolHandler for ScpHandler {
     }
 }
 
-fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()>{
+fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
+    use crate::MAX_FILE_SIZE_MB;
+    use super::DEFAULT_BUFFER_SIZE;
+
+    let max_mb = *MAX_FILE_SIZE_MB.read().unwrap();
     if upload {
         info!(
             "Attempting to upload file from '{}' to remote path '{}'",
             src.display(),
             dst.display()
         );
-        let local_file_content = read_to_string(src).with_context(|| {
+        let local_file = File::open(src).with_context(|| {
             format!(
             "failed to read local source file for upload: '{}'",
                 src.display()
             )
         })?;
-        let content_bytes = local_file_content.as_str().as_bytes();
-        let mut remote_file = session.scp_send(Path::new(dst), 0o644, content_bytes.len() as u64, None).with_context(|| {
+
+        let metadata = local_file.metadata()?;
+        let file_size = metadata.len();
+        let max_size_bytes = max_mb * 1024 * 1024;
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "File '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
+
+        let mut remote_file = session.scp_send(Path::new(dst), 0o644, file_size, None).with_context(|| {
             format!(
             "Failed to create remote destination file for upload: '{}'",
                 dst.display()
@@ -97,13 +112,15 @@ fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bo
         // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
         // The file transfer timeout is set to 10 seconds.
         // No special callback processing is performed during file transfer.
-        remote_file.write_all(&content_bytes).with_context(|| {
+        let mut reader = BufReader::with_capacity(DEFAULT_BUFFER_SIZE, local_file); // 8MB buffer
+        copy(&mut reader, &mut remote_file).with_context(|| {
             format!(
             "Failed to copy data during upload from '{}' to '{}'",
                 src.display(),
                 dst.display()
             )
         })?;
+
         // Close the channel and wait for the whole content to be transferred
         remote_file.send_eof()?;
         remote_file.wait_eof()?;
@@ -120,33 +137,33 @@ fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bo
             src.display(),
             dst.display()
         );
-        let (mut remote_file, _) = session.scp_recv(Path::new(src)).with_context(|| {
+        let (remote_file, stat) = session.scp_recv(Path::new(src)).with_context(|| {
             format!(
                 "Failed to open remote source file for download: '{}'",
                 src.display()
             )
         })?;
-        let mut contents = Vec::new();
-        remote_file.read_to_end(&mut contents).with_context(|| {
-            format!(
-                "Failed to read remote file for download: '{}'",
-                src.display()
-            )
-        })?;
-        // Close the channel and wait for the whole content to be transferred
-        remote_file.send_eof()?;
-        remote_file.wait_eof()?;
-        remote_file.close()?;
-        remote_file.wait_close()?;
 
-        // Write contents to local file
-        let mut file = File::create(dst)?;
-        file.write_all(&contents).with_context(|| {
+        let file_size = stat.size(); // ファイルサイズ (u64)
+        let max_size_bytes = max_mb * 1024 * 1024;
+
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "Remote file '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
+        
+        let mut local_file = File::create(dst)?;
+        let mut reader = BufReader::with_capacity(DEFAULT_BUFFER_SIZE, remote_file); // 8MB buffer
+        copy(&mut reader, &mut local_file).with_context(|| {
             format!("Failed to copy data during download from '{}' to '{}'",
                 src.display(),
                 dst.display()
             )
         })?;
+
         info!(
             "Successfully downloaded file from '{}' to '{}'",
             src.display(),

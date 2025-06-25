@@ -1603,6 +1603,7 @@ dependencies = [
  "fern",
  "lazy_static",
  "log",
+ "once_cell",
  "regex",
  "serde",
  "serde_yaml",
