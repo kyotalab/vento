@@ -1,15 +1,11 @@
 use crate::{
-    Authentication, AuthenticationMethod, TransferProfile, error::AppError,
-    transfer::protocol::TransferProtocolHandler,
-    util::get_private_key_path,
+    connect_session_and_authenticate, transfer::protocol::TransferProtocolHandler, TransferProfile
 };
 use anyhow::{Context, Result};
-use dirs::home_dir;
-use log::{debug, error, info};
+use log::info;
 use ssh2::Session;
-use ssh2_config::{ParseRule, SshConfig};
 use std::{
-    fs::{read_to_string, File}, io::{Read, Write}, net::TcpStream, path::{Path, PathBuf}
+    fs::{read_to_string, File}, io::{Read, Write}, path::{Path, PathBuf}
 };
 
 pub struct ScpHandler;
@@ -17,9 +13,11 @@ pub struct ScpHandler;
 #[async_trait::async_trait]
 impl TransferProtocolHandler for ScpHandler {
     async fn send(&self, profile: &TransferProfile) -> Result<()> {
+        let protocol = profile.transfer_protocol.protocol.to_string();
         info!(
-            "Attempting to send file from '{}' to SCP destination '{}'@{}:{}{}",
+            "Attempting to send file from '{}' to {:?} destination '{}'@{}:{}{}",
             profile.source.path,
+            profile.transfer_protocol.protocol,
             profile
                 .destination
                 .authentication
@@ -29,32 +27,26 @@ impl TransferProtocolHandler for ScpHandler {
             profile.destination.port.unwrap_or(22),
             profile.destination.path
         );
-        let session = connect_scp_and_authenticate(
+        let session = connect_session_and_authenticate(
+           &protocol, 
             profile.destination.authentication.as_ref(),
             profile.destination.host.as_deref(),
             profile.destination.port,
         )?;
 
-        let local_file_content = read_to_string(&profile.source.path)?;
-        println!("{}", local_file_content);
-        let content_bytes = local_file_content.as_str().as_bytes();
-        let mut remote_file = session.scp_send(Path::new(&profile.destination.path), 0o644, content_bytes.len() as u64, None)?;
-        // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
-        // The file transfer timeout is set to 10 seconds.
-        // No special callback processing is performed during file transfer.
-        remote_file.write_all(&content_bytes)?;
-        // Close the channel and wait for the whole content to be transferred
-        remote_file.send_eof()?;
-        remote_file.wait_eof()?;
-        remote_file.close()?;
-        remote_file.wait_close()?;
+        transfer_file_scp(
+            &session,
+            &profile.source.path.clone().into(),
+            &profile.destination.path.clone().into(),
+            true)
 
-        Ok(())
     }
 
     async fn receive(&self, profile: &TransferProfile) -> Result<()> {
+        let protocol = profile.transfer_protocol.protocol.to_string();
         info!(
-            "Attempting to receive file from SCP source '{}'@{}:{}{} to local '{}'",
+            "Attempting to receive file from {} source '{}'@{}:{}{} to local '{}'",
+            &protocol,
             profile
                 .source
                 .authentication
@@ -66,15 +58,81 @@ impl TransferProtocolHandler for ScpHandler {
             profile.destination.path
         );
 
-        let session = connect_scp_and_authenticate(
+        let session = connect_session_and_authenticate(
+            &protocol,
             profile.source.authentication.as_ref(),
             profile.source.host.as_deref(),
             profile.source.port,
         )?;
 
-        let (mut remote_file, _) = session.scp_recv(Path::new(&profile.source.path))?;
+        transfer_file_scp(
+            &session,
+            &profile.source.path.clone().into(),
+            &profile.destination.path.clone().into(),
+            false
+        )
+    }
+}
+
+fn transfer_file_scp(session: &Session, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()>{
+    if upload {
+        info!(
+            "Attempting to upload file from '{}' to remote path '{}'",
+            src.display(),
+            dst.display()
+        );
+        let local_file_content = read_to_string(src).with_context(|| {
+            format!(
+            "failed to read local source file for upload: '{}'",
+                src.display()
+            )
+        })?;
+        let content_bytes = local_file_content.as_str().as_bytes();
+        let mut remote_file = session.scp_send(Path::new(dst), 0o644, content_bytes.len() as u64, None).with_context(|| {
+            format!(
+            "Failed to create remote destination file for upload: '{}'",
+                dst.display()
+            )
+        })?;
+        // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
+        // The file transfer timeout is set to 10 seconds.
+        // No special callback processing is performed during file transfer.
+        remote_file.write_all(&content_bytes).with_context(|| {
+            format!(
+            "Failed to copy data during upload from '{}' to '{}'",
+                src.display(),
+                dst.display()
+            )
+        })?;
+        // Close the channel and wait for the whole content to be transferred
+        remote_file.send_eof()?;
+        remote_file.wait_eof()?;
+        remote_file.close()?;
+        remote_file.wait_close()?;
+        info!(
+            "Successfully uploaded file from '{}' to '{}'",
+            src.display(),
+            dst.display()
+        );
+    } else {
+        info!(
+            "Attempting to download file from remote path '{}' to local path '{}'",
+            src.display(),
+            dst.display()
+        );
+        let (mut remote_file, _) = session.scp_recv(Path::new(src)).with_context(|| {
+            format!(
+                "Failed to open remote source file for download: '{}'",
+                src.display()
+            )
+        })?;
         let mut contents = Vec::new();
-        remote_file.read_to_end(&mut contents)?;
+        remote_file.read_to_end(&mut contents).with_context(|| {
+            format!(
+                "Failed to read remote file for download: '{}'",
+                src.display()
+            )
+        })?;
         // Close the channel and wait for the whole content to be transferred
         remote_file.send_eof()?;
         remote_file.wait_eof()?;
@@ -82,127 +140,19 @@ impl TransferProtocolHandler for ScpHandler {
         remote_file.wait_close()?;
 
         // Write contents to local file
-        let local_path = PathBuf::from(&profile.destination.path);
-        let mut file = File::create(&local_path)?;
-        file.write_all(&contents)?;
-
-        Ok(())
-    }
-}
-
-fn connect_scp_and_authenticate(
-    auth: Option<&Authentication>,
-    host_opt: Option<&str>,
-    port_opt: Option<u16>,
-) -> Result<Session> {
-    let auth = auth.ok_or(AppError::AuthenticationFailed("Missing auth".into()))?;
-
-    let mut host = host_opt.unwrap_or("localhost").to_string();
-    let mut port = port_opt.unwrap_or(22);
-    let mut username = auth.username.clone();
-    let mut private_key_path: Option<PathBuf> = None;
-    let mut password: Option<String> = None;
-
-    info!("Connecting to SCP server: {}@{}:{}", username, host, port);
-
-    match auth.method {
-        AuthenticationMethod::Password => {
-            password = auth.password_ref.as_ref().map(|ref_name| {
-                std::env::var(ref_name).unwrap_or_else(|_| {
-                    eprintln!("Warning: env var '{}' not found.", ref_name);
-                    String::new()
-                })
-            });
-        }
-        AuthenticationMethod::PrivateKey | AuthenticationMethod::EnvKey => {
-            let key_str = get_private_key_path(auth)?;
-            private_key_path = Some(PathBuf::from(key_str));
-        }
-        AuthenticationMethod::SshConfig => {
-            let alias = auth.ssh_config_alias.as_ref().ok_or(AppError::Validation(
-                "sshConfigAlias is required for SshConfig method".to_string(),
-            ))?;
-
-            let ssh_config = SshConfig::parse_default_file(ParseRule::STRICT)?;
-            let host_config = ssh_config.query(alias);
-
-            host = host_config.host_name.unwrap_or_else(|| host.clone());
-            port = host_config.port.unwrap_or(port);
-
-            if let Some(user_from_config) = host_config.user {
-                username = user_from_config;
-            }
-
-            if let Some(identity_files) = &host_config.identity_file {
-                if let Some(first) = identity_files.first() {
-                    let path = PathBuf::from(first);
-                    let resolved = if path.is_relative() {
-                        home_dir()
-                            .context("No home dir found for resolving relative path")?
-                            .join(&path)
-                    } else {
-                        path
-                    };
-                    debug!(
-                        "Using identity file from SSH config: '{}'",
-                        resolved.display()
-                    );
-                    private_key_path = Some(resolved);
-                } else {
-                    debug!("SSH config had identity_file entry but it was empty.");
-                }
-            } else {
-                debug!("SSH config did not specify identity_file.");
-            }
-            info!(
-                "Resolved connection details via SSH config: User={}, Host={}, Port={}",
-                username, host, port
-            );
-        }
-    }
-
-    let tcp = TcpStream::connect((host.clone(), port))
-        .with_context(|| format!("Failed to connect to {}:{}", host, port))?;
-    info!("TCP connection established to {}:{}", host, port);
-
-    let mut sess = Session::new()?;
-    sess.set_tcp_stream(tcp);
-    sess.handshake().context("SSH handshake failed")?;
-    info!("SSH handshake successful.");
-
-    if let Some(path) = private_key_path {
+        let mut file = File::create(dst)?;
+        file.write_all(&contents).with_context(|| {
+            format!("Failed to copy data during download from '{}' to '{}'",
+                src.display(),
+                dst.display()
+            )
+        })?;
         info!(
-            "Attempting public key authentication with key: '{}'",
-            path.display()
+            "Successfully downloaded file from '{}' to '{}'",
+            src.display(),
+            dst.display()
         );
-        sess.userauth_pubkey_file(&username, None, &path, None)
-            .with_context(|| {
-                format!(
-                    "Private key authentication failed for user '{}' using key '{}'",
-                    username,
-                    path.display()
-                )
-            })?;
-    } else if let Some(pw) = password {
-        info!("Attempting password authentication.");
-        sess.userauth_password(&username, &pw)
-            .with_context(|| format!("Password authentication failed for user '{}'", username))?;
-    } else {
-        error!(
-            "No suitable authentication method could be resolved for user '{}'.",
-            username
-        );
-        return Err(AppError::AuthenticationFailed("No auth method resolved".into()).into());
     }
 
-    if !sess.authenticated() {
-        error!(
-            "SCP authentication failed for user '{}'. Session not authenticated.",
-            username
-        );
-        return Err(AppError::AuthenticationFailed("SCP authentication failed".into()).into());
-    }
-    info!("SCP authentication successful for user: '{}'.", username);
-
-    Ok(sess)
+    Ok(())
 }

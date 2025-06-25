@@ -1,4 +1,4 @@
-use std::{fs, path::Path, str::FromStr as _};
+use std::{fs, path::Path, str::FromStr};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -289,4 +289,13 @@ pub struct TransferProtocol {
 pub enum ProtocolType {
     Sftp,
     Scp,
+}
+
+impl ToString for ProtocolType {
+   fn to_string(&self) -> String {
+        match self {
+            ProtocolType::Sftp => "SFTP".into(),
+            ProtocolType::Scp => "SCP".into(),
+        }
+    } 
 }
