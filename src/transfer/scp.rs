@@ -9,7 +9,7 @@ use log::{debug, error, info};
 use ssh2::Session;
 use ssh2_config::{ParseRule, SshConfig};
 use std::{
-    fs::File, io::{Read, Write}, net::TcpStream, path::{Path, PathBuf}
+    fs::{read_to_string, File}, io::{Read, Write}, net::TcpStream, path::{Path, PathBuf}
 };
 
 pub struct ScpHandler;
@@ -35,19 +35,20 @@ impl TransferProtocolHandler for ScpHandler {
             profile.destination.port,
         )?;
 
-        let mut remote_file = session.scp_send(Path::new(&profile.destination.path), 0o644, 10, None)?;
+        let local_file_content = read_to_string(&profile.source.path)?;
+        println!("{}", local_file_content);
+        let content_bytes = local_file_content.as_str().as_bytes();
+        let mut remote_file = session.scp_send(Path::new(&profile.destination.path), 0o644, content_bytes.len() as u64, None)?;
         // Permissions on sent files are set to 0o644 (owner: read/write, group: read, other: read).
         // The file transfer timeout is set to 10 seconds.
         // No special callback processing is performed during file transfer.
-        println!("start writing");
-        remote_file.write_all(b"1234567890").unwrap();
+        remote_file.write_all(&content_bytes)?;
         // Close the channel and wait for the whole content to be transferred
-        remote_file.send_eof().unwrap();
-        remote_file.wait_eof().unwrap();
-        remote_file.close().unwrap();
-        remote_file.wait_close().unwrap();
+        remote_file.send_eof()?;
+        remote_file.wait_eof()?;
+        remote_file.close()?;
+        remote_file.wait_close()?;
 
-        println!("end");
         Ok(())
     }
 
