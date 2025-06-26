@@ -1,3 +1,15 @@
+<div align="center">
+<h1 style="display: flex; align-items: center; gap: 16px;">
+  <img alt="Vento" height="160" src="logo.svg">
+</h1>
+</div>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Rust-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
+  <img src="https://img.shields.io/badge/Version-0.2.0-blue.svg" alt="Version: 0.2.0">
+</p>
+
 # Vento — A Lightweight CLI Tool for File Transfer
 
 ## What is Vento?
