@@ -5,8 +5,8 @@ pub mod profile;
 pub mod transfer;
 pub mod util;
 
-use lazy_static::lazy_static;
-use tokio::sync::RwLock;
+use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use anyhow::{Context, Result};
 pub use cli::*;
@@ -17,8 +17,18 @@ pub use profile::*;
 pub use transfer::*;
 pub use util::*;
 
-lazy_static! {
-    pub static ref MAX_FILE_SIZE_MB: RwLock<u64> = RwLock::new(8);
+pub static MAX_FILE_SIZE_MB: OnceLock<AtomicU64> = OnceLock::new();
+
+
+pub fn init_max_file_size_mb(val: u64) {
+    MAX_FILE_SIZE_MB.set(AtomicU64::new(val)).expect("Already initialized");
+}
+
+pub fn get_max_file_size_mb() -> u64 {
+    MAX_FILE_SIZE_MB
+        .get()
+        .expect("MAX_FILE_SIZE_MB not initialized")
+        .load(Ordering::Relaxed)
 }
 
 pub fn setup_logging(app_config: &AppConfig) -> Result<()> {

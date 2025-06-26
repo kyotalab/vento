@@ -1,5 +1,5 @@
 use crate::{
-    connect_session_and_authenticate, transfer::protocol::TransferProtocolHandler, TransferProfile,
+    connect_session_and_authenticate, get_max_file_size_mb, transfer::protocol::TransferProtocolHandler, TransferProfile
 };
 use anyhow::{anyhow, Context, Result};
 use log::info;
@@ -43,7 +43,6 @@ impl TransferProtocolHandler for SftpHandler {
             &profile.destination.path.clone().into(),
             true, // upload
         )
-        .await
     }
 
     async fn receive(&self, profile: &TransferProfile) -> Result<()> {
@@ -75,14 +74,12 @@ impl TransferProtocolHandler for SftpHandler {
             &profile.destination.path.clone().into(),
             false, // download
         )
-        .await
     }
 }
 
-async fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
-    use crate::MAX_FILE_SIZE_MB;
+fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: bool) -> Result<()> {
 
-//     let max_mb = *MAX_FILE_SIZE_MB.read().await;
+    let max_mb = get_max_file_size_mb();
     if upload {
         info!(
             "Attempting to upload file from '{}' to remote path '{}'",
@@ -96,16 +93,16 @@ async fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: b
             )
         })?;
 
-//        let metadata = local_file.metadata()?;
-//        let file_size = metadata.len();
-//        let max_size_bytes = max_mb * 1024 * 1024;
-//        if file_size > max_size_bytes {
-//            return Err(anyhow!(
-//                "File '{}' exceeds max allowed size ({} MB)",
-//                src.display(),
-//                max_size_bytes / 1024 / 1024
-//            ));
-//        }
+        let metadata = local_file.metadata()?;
+        let file_size = metadata.len();
+        let max_size_bytes = max_mb * 1024 * 1024;
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "File '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
 
         let mut remote_file = sftp.create(Path::new(dst)).with_context(|| {
             format!(
@@ -138,18 +135,18 @@ async fn transfer_file_sftp(sftp: &Sftp, src: &PathBuf, dst: &PathBuf, upload: b
             )
         })?;
 
-//        let stat = remote_file.stat()?;
-//        let file_size = stat
-//            .size
-//            .ok_or_else(|| anyhow!("Unable to get size of remote file"))?;
-//        let max_size_bytes = max_mb * 1024 * 1024;
-//        if file_size > max_size_bytes {
-//            return Err(anyhow!(
-//                "File '{}' exceeds max allowed size ({} MB)",
-//                src.display(),
-//                max_size_bytes / 1024 / 1024
-//            ));
-//        }
+        let stat = remote_file.stat()?;
+        let file_size = stat
+            .size
+            .ok_or_else(|| anyhow!("Unable to get size of remote file"))?;
+        let max_size_bytes = max_mb * 1024 * 1024;
+        if file_size > max_size_bytes {
+            return Err(anyhow!(
+                "File '{}' exceeds max allowed size ({} MB)",
+                src.display(),
+                max_size_bytes / 1024 / 1024
+            ));
+        }
 
         let mut local_file = File::create(dst).with_context(|| {
             format!(
