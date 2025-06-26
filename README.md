@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/Version-0.2.0-blue.svg" alt="Version: 0.2.0">
 </p>
 
+> 🇬🇧 Looking for English? [Read the English introduction article here.](./README_en.md)
 
 ## はじめに
 
