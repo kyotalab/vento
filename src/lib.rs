@@ -8,7 +8,7 @@ pub mod util;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 pub use cli::*;
 pub use config::*;
 pub use error::*;
@@ -18,10 +18,22 @@ pub use transfer::*;
 pub use util::*;
 
 pub static MAX_FILE_SIZE_MB: OnceLock<AtomicU64> = OnceLock::new();
+pub const MAX_ALLOWED_MB: usize = 2048; // 2GB
 
+pub fn init_max_file_size_mb(val: u64) -> Result<()> {
+    if val as usize > MAX_ALLOWED_MB {
+        return Err(anyhow!(
+            "max_file_size_mb must not exceed {}MB (got: {}MB)",
+            MAX_ALLOWED_MB,
+            val
+        ));
+    }
 
-pub fn init_max_file_size_mb(val: u64) {
-    MAX_FILE_SIZE_MB.set(AtomicU64::new(val)).expect("Already initialized");
+    MAX_FILE_SIZE_MB
+        .set(AtomicU64::new(val))
+        .map_err(|_| anyhow!("MAX_FILE_SIZE_MB is already initialized"))?;
+
+    Ok(())
 }
 
 pub fn get_max_file_size_mb() -> u64 {

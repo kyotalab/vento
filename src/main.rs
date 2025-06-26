@@ -4,7 +4,6 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use log::{error, info};
 use vento::{dispatch, init_max_file_size_mb, setup_logging, AppConfig, Cli, Profile};
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -18,7 +17,7 @@ async fn main() -> Result<()> {
         AppConfig::load_config().context("Failed to load default application configuration")?
     };
 
-    init_max_file_size_mb(app_config.max_file_size_mb.unwrap_or(500));
+    init_max_file_size_mb(app_config.max_file_size_mb.unwrap_or(500))?;
 
     let profile_path = &app_config.default_profile_file;
     if profile_path.is_none() {
