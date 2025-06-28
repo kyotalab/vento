@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use crate::{process_transfer_profile, AppError, Profile};
+use crate::{process_transfer_profile, AppConfig, AppError, Profile};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -20,9 +20,12 @@ pub enum Commands {
         #[arg(short, long)]
         profile_id: String,
     },
+    #[command(name = "admin")]
+    #[command(about = "Manages configuration settings and transfer profile information")]
+    Admin,
 }
 
-pub async fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
+pub async fn dispatch(cli: Cli, profiles: Profile, app_config: AppConfig) -> Result<()> {
     match cli.command {
         Commands::Transfer { profile_id } => {
             // profile_id に該当する TransferProfile を探す
@@ -41,6 +44,11 @@ pub async fn dispatch(cli: Cli, profiles: Profile) -> Result<()> {
                     .into());
                 }
             }
+        }
+        Commands::Admin => {
+            println!("admin command");
+            println!("{:?}", app_config);
+            Ok(())
         }
     }
 }

@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
     info!("Using profile file: {}", profile_path);
     let profiles = Profile::load_profiles(Path::new(&profile_path))?;
 
-    let result = dispatch(cli, profiles).await;
+    let result = dispatch(cli, profiles, app_config).await;
 
     if let Err(e) = &result {
         error!("Application error: {:?}", e);
