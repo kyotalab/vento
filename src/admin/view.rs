@@ -68,11 +68,11 @@ fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
     }).collect();
 
     let widths = &[
+            Constraint::Length(30),
+            Constraint::Length(60),
             Constraint::Length(20),
-            Constraint::Length(30),
-            Constraint::Length(30),
-            Constraint::Length(30),
-            Constraint::Length(30),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
         ];
 
     let table = Table::new(rows, widths)
@@ -118,10 +118,10 @@ fn render_config_summary(f: &mut Frame, area: Rect, state: &AdminState) {
 
     let widths = &[
             Constraint::Length(30),
-            Constraint::Length(10),
-            Constraint::Length(30),
-            Constraint::Length(10),
-            Constraint::Length(10),
+            Constraint::Min(40),
+           //  Constraint::Length(30),
+           //  Constraint::Length(10),
+           //  Constraint::Length(10),
         ];
 //    let widths = &[Constraint::Length(30), Constraint::Min(10), Constraint::Min(10)];
     let table = Table::new(rows, widths)

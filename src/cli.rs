@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use crate::{process_transfer_profile, AppConfig, AppError, Profile};
+use crate::{process_transfer_profile, run_admin_ui, AppConfig, AppError, Profile};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -48,7 +48,7 @@ pub async fn dispatch(cli: Cli, profiles: Profile, app_config: AppConfig) -> Res
         Commands::Admin => {
             println!("admin command");
             println!("{:?}", app_config);
-            Ok(())
+            run_admin_ui(app_config, profiles)
         }
     }
 }
