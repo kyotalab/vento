@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod cli;
 pub mod config;
 pub mod error;
@@ -7,7 +8,7 @@ pub mod util;
 
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
-
+pub use admin::*;
 use anyhow::{Context, Result, anyhow};
 pub use cli::*;
 pub use config::*;
