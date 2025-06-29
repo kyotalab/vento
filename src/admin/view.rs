@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table},
     Frame,
 };
-use crate::{AdminState, AdminMode};
+use crate::{AdminMode, AdminState, SourceType};
 
 pub fn render_admin(f: &mut Frame, state: &AdminState) {
     // レイアウトを2分割：タブと一覧表示
@@ -43,6 +43,7 @@ fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
     let header = Row::new(vec![
         Cell::from("Profile ID"),
         Cell::from("Description"),
+        Cell::from("Hostname"),
         Cell::from("Protocol"),
         Cell::from("Source"),
         Cell::from("Destination"),
@@ -55,11 +56,19 @@ fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
         } else {
             Style::default()
         };
+
+        let host = if p.source.kind == SourceType::Local {
+            p.destination.host.clone().unwrap_or_else(|| "<missing host>".to_string())
+        } else {
+            p.source.host.clone().unwrap_or_else(|| "<missing host>".to_string())
+        };
+
         Row::new(vec![
             Cell::from(p.profile_id.clone()),
             Cell::from(p.description
                 .clone()
                 .unwrap_or_else(|| "".into())),
+            Cell::from(host),
             Cell::from(p.transfer_protocol.protocol.to_string().clone()),
             Cell::from(p.source.path.clone()),
             Cell::from(p.destination.path.clone()),
@@ -70,6 +79,7 @@ fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
     let widths = &[
             Constraint::Length(30),
             Constraint::Length(60),
+            Constraint::Length(20),
             Constraint::Length(20),
             Constraint::Percentage(25),
             Constraint::Percentage(25),
@@ -119,11 +129,7 @@ fn render_config_summary(f: &mut Frame, area: Rect, state: &AdminState) {
     let widths = &[
             Constraint::Length(30),
             Constraint::Min(40),
-           //  Constraint::Length(30),
-           //  Constraint::Length(10),
-           //  Constraint::Length(10),
         ];
-//    let widths = &[Constraint::Length(30), Constraint::Min(10), Constraint::Min(10)];
     let table = Table::new(rows, widths)
         .block(Block::default().title("Config").borders(Borders::ALL));
 

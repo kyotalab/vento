@@ -46,8 +46,6 @@ pub async fn dispatch(cli: Cli, profiles: Profile, app_config: AppConfig) -> Res
             }
         }
         Commands::Admin => {
-            println!("admin command");
-            println!("{:?}", app_config);
             run_admin_ui(app_config, profiles)
         }
     }
