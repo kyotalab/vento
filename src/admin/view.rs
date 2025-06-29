@@ -4,49 +4,74 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
     Frame,
 };
-use crate::{AdminMode, AdminState, SourceType};
+use crate::{AdminMode, AdminState, EditState, SourceType, UiState};
 
 pub fn render_admin(f: &mut Frame, state: &AdminState) {
-    // レイアウトを3分割：タブ, メイン表示, ヘルプ
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints([
-            Constraint::Length(3),  // タブ
-            Constraint::Min(0),     // メイン（Profile/Config）
-            Constraint::Length(1),  // ヘルプ（キー操作説明）
-        ])
-        .split(f.area());
+    // レイアウトをモードに応じて決定
+    let chunks = if let UiState::EditView(_) = state.ui_state {
+        // 編集モードではタブを表示しない（2分割）
+        Layout::default()
+            .direction(Direction::Vertical)
+            .margin(1)
+            .constraints([
+                Constraint::Min(0),     // メイン表示
+                Constraint::Length(1),  // ヘルプ
+            ])
+            .split(f.area())
+    } else {
+        // 通常モードはタブ + メイン + ヘルプ
+        Layout::default()
+            .direction(Direction::Vertical)
+            .margin(1)
+            .constraints([
+                Constraint::Length(3),  // タブ
+                Constraint::Min(0),     // メイン表示
+                Constraint::Length(1),  // ヘルプ
+            ])
+            .split(f.area())
+    };
 
-    // モード表示タブ
-    let titles: Vec<_> = ["Profile", "Config"]
-        .iter()
-        .map(|t| (*t).into())
-        .collect::<Vec<String>>();
-    let tabs = ratatui::widgets::Tabs::new(titles)
-        .select(match state.mode {
-            AdminMode::Profile => 0,
-            AdminMode::Config => 1,
-        })
-        .block(Block::default().borders(Borders::ALL).title("Mode"))
-        .style(Style::default().fg(Color::White))
-        .highlight_style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
-    f.render_widget(tabs, chunks[0]);
+    match &state.ui_state {
+        UiState::ListView => {
+            // タブの描画（ListView時のみ）
+            let titles: Vec<_> = ["Profile", "Config"]
+                .iter()
+                .map(|t| (*t).into())
+                .collect::<Vec<String>>();
+            let tabs = ratatui::widgets::Tabs::new(titles)
+                .select(match state.mode {
+                    AdminMode::Profile => 0,
+                    AdminMode::Config => 1,
+                })
+                .block(Block::default().borders(Borders::ALL).title("Mode"))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+            f.render_widget(tabs, chunks[0]);
 
-    match state.mode {
-        AdminMode::Profile => {
-            render_profile_list(f, chunks[1], state);
+            // メイン表示
+            match state.mode {
+                AdminMode::Profile => render_profile_list(f, chunks[1], state),
+                AdminMode::Config => render_config_summary(f, chunks[1], state),
+            }
+
+            // ヘルプ表示
+            let help = Paragraph::new("[↑↓] 選択  [Enter] 編集  [Q/Esc] 終了")
+                .style(Style::default().fg(Color::Gray))
+                .wrap(Wrap { trim: true });
+            f.render_widget(help, chunks[2]);
         }
-        AdminMode::Config => {
-            render_config_summary(f, chunks[1], state);
+
+        UiState::EditView(edit_state) => {
+            // メイン表示
+            render_edit_view(f, chunks[0], edit_state);
+
+            // ヘルプ表示
+            let help = Paragraph::new("[↑↓] 項目移動  [文字入力] 編集  [Esc] 戻る")
+                .style(Style::default().fg(Color::Gray))
+                .wrap(Wrap { trim: true });
+            f.render_widget(help, chunks[1]);
         }
     }
-
-    // キー操作ヘルプの表示
-    let help = Paragraph::new("[↑↓] 選択  [Enter] 編集  [Q/Esc] 終了")
-        .style(Style::default().fg(Color::Gray))
-        .wrap(Wrap { trim: true });
-    f.render_widget(help, chunks[2]);
 }
 
 fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
@@ -142,6 +167,28 @@ fn render_config_summary(f: &mut Frame, area: Rect, state: &AdminState) {
         ];
     let table = Table::new(rows, widths)
         .block(Block::default().title("Config").borders(Borders::ALL));
+
+    f.render_widget(table, area);
+}
+
+
+
+fn render_edit_view(f: &mut Frame, area: Rect, edit_state: &EditState) {
+    let rows: Vec<Row> = edit_state.input_fields.iter().enumerate().map(|(i, field)| {
+        let label = &field.label;
+        let value = &field.value;
+        let display = format!("{}: {}", label, value);
+        let style = if i == edit_state.current_fields {
+            Style::default().bg(Color::Yellow).fg(Color::Black)
+        } else {
+            Style::default()
+        };
+        Row::new(vec![Cell::from(display)]).style(style)
+    }).collect();
+
+    let table = Table::new(rows, &[Constraint::Percentage(100)])
+        .block(Block::default().borders(Borders::ALL).title("編集"))
+        .row_highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_widget(table, area);
 }
