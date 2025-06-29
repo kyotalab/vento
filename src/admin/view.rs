@@ -1,17 +1,21 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
     Frame,
 };
 use crate::{AdminMode, AdminState, SourceType};
 
 pub fn render_admin(f: &mut Frame, state: &AdminState) {
-    // レイアウトを2分割：タブと一覧表示
+    // レイアウトを3分割：タブ, メイン表示, ヘルプ
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+        .constraints([
+            Constraint::Length(3),  // タブ
+            Constraint::Min(0),     // メイン（Profile/Config）
+            Constraint::Length(1),  // ヘルプ（キー操作説明）
+        ])
         .split(f.area());
 
     // モード表示タブ
@@ -37,6 +41,12 @@ pub fn render_admin(f: &mut Frame, state: &AdminState) {
             render_config_summary(f, chunks[1], state);
         }
     }
+
+    // キー操作ヘルプの表示
+    let help = Paragraph::new("[↑↓] 選択  [Enter] 編集  [Q/Esc] 終了")
+        .style(Style::default().fg(Color::Gray))
+        .wrap(Wrap { trim: true });
+    f.render_widget(help, chunks[2]);
 }
 
 fn render_profile_list(f: &mut Frame, area: Rect, state: &AdminState) {
