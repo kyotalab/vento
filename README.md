@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/Version-0.2.0-blue.svg" alt="Version: 0.2.0">
+  <img src="https://img.shields.io/badge/Version-0.3.0-blue.svg" alt="Version: 0.3.0">
 </p>
 
 > 🇬🇧 Looking for English? [Read the English introduction article here.](./README_en.md)
@@ -18,7 +18,7 @@ Vento は、シンプルで高速なファイル転送とジョブ連携を目�
 
 ---
 
-## 主な機能 (v0.2.0)
+## 主な機能 (v0.3.0)
 
 * **転送プロファイルの定義**: YAML 形式の設定ファイル `profiles.yaml` で転送元、転送先、プロトコルなどを柔軟に設定できます。
 * **SFTP 転送**: ローカルファイルシステムと SFTP サーバー間でのファイルのアップロード・ダウンロードに対応しています。公開鍵認証をサポートします。
@@ -30,13 +30,19 @@ Vento は、シンプルで高速なファイル転送とジョブ連携を目�
 maxFileSizeMb: 500  # 上限は 2048MB
 ```
 
-* **プロファイル設定項目のバリデーション強化（改善）**: `profile_id` や記述内容の整合性チェックを追加。設定ファイルの誤記に対して早期にエラーを通知します。
 * **ジョブ連携**:
     * **転送前ジョブ**: ファイル転送の前に任意のコマンドを実行できます。
     * **転送後ジョブ**: ファイル転送が成功した後に任意のコマンドを実行できます。
     * **異常時ジョブ**: ファイル転送が失敗した場合に任意のコマンドを実行できます。
 * **基本的なロギング**: 実行状況をコンソールまたはファイルに出力し、デバッグや運用をサポートします。
 
+* **TUIベースのプロファイル管理（新機能）**:
+    `vento admin` コマンドでターミナルUIを起動し、以下の操作が可能になりました。
+        - プロファイルの一覧表示
+        - プロファイルの編集
+        - プロファイルの新規作成（テンプレート生成）
+        - プロファイルの削除
+        - プロファイルの複製
 
 **⚠️ ファイルサイズバリデーションについて**
 
@@ -199,23 +205,17 @@ vento transfer --profile-id daily-report-sftp
 
 ```bash
 vento --help
-# Usage: vento <COMMAND>
+# Usage: vento [OPTIONS] <COMMAND>
 
 # Commands:
 #   transfer  Transfer by profile in config.yaml
+#   admin     Manages configuration settings and transfer profile information
 #   help      Print this message or the help of the given subcommand(s)
 
 # Options:
-#   -c, --config <CONFIG>  Override the default config file path
+#   -c, --config <CONFIG>
 #   -h, --help             Print help
 #   -V, --version          Print version
-
-vento transfer --help
-# Usage: vento transfer [OPTIONS]
-
-# Options:
-#   -p, --profile-id <PROFILE_ID>
-#   -h, --help                     Print help
 ```
 
 ---

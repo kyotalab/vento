@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/Version-0.2.0-blue.svg" alt="Version: 0.2.0">
+  <img src="https://img.shields.io/badge/Version-0.3.0-blue.svg" alt="Version: 0.3.0">
 </p>
 
 # Vento — A Lightweight CLI Tool for File Transfer
@@ -22,11 +22,17 @@ With a single YAML configuration file, you can define flexible transfer profiles
 
 - **Transfer Profiles via YAML**: Easily define source, destination, protocol, authentication, and hooks.
 - **SFTP Transfers**: Upload/download files between local and SFTP servers, with SSH key authentication support.
-- **SCP Transfers** (New): Supports SCP-based transfer for environments where SFTP is unavailable.
-- **File Size Limitation** (New): Prevent unintended large file transfers by setting `maxFileSizeMb` in `config.yaml`. Default is 500MB. The maximum allowed value is 2048MB (2GB).
-- **Validation Improvements**: Validates profile IDs and required fields in YAML, with clear error feedback.
+- **SCP Transfers**: Supports SCP-based transfer for environments where SFTP is unavailable.
+- **File Size Limitation**: Prevent unintended large file transfers by setting `maxFileSizeMb` in `config.yaml`. Default is 500MB. The maximum allowed value is 2048MB (2GB).
 - **Pre/Post/Error Hooks**: Execute arbitrary shell commands before/after transfers or when errors occur.
 - **Simple Logging**: Output logs to file or stdout for easy debugging and tracking.
+- **TUI-based Profile Management** (New):
+  A new `vento admin` command launches a terminal user interface for:
+  - Viewing existing profiles
+  - Editing profiles interactively
+  - Creating new profiles with a template
+  - Deleting profiles
+  - Duplicating profiles
 
 ## Sample `config.yaml`
 

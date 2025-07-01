@@ -1,34 +1,49 @@
 # Changelog
 
-すべての更新履歴は [GitHub Releases](https://github.com/kyotalab/vento/releases) をご覧ください。
+Please see [GitHub Releases](https://github.com/kyotalab/vento/releases) for a complete update history.
+
+## [v0.3.0] - 2025-07-01
+
+### Added
+- `vento admin` TUI interface for managing transfer profiles
+- Support for:
+    - Viewing profiles in list view
+    - Editing profiles interactively
+    - Creating new profiles (Ctrl+N)
+    - Deleting profiles (Ctrl+D)
+    - Duplicating profiles (Ctrl+C)
+    - Config editing (Tab to switch)
+- Cursor movement and editing enhancements (arrow keys, cursor position shown)
+
+### Changed
+- Keyboard shortcuts updated for improved usability (Tab, Shift+Tab, Ctrl+S, etc.)
+
+### Fixed
+- Profile and config YAML changes now persist correctly on save
+
+---
 
 ## [v0.2.0] - 2025-06-26
 
-### 🚀 新機能
+### Added
+- **SCP protocol support**
+    - Now possible to transfer files between local and remote using SCP (supports both upload and download).
+- **Added file size upper limit validation**
+`maxFileSizeMb` can now be specified in `config.yaml`. Default is 500MB. The upper limit is limited to 2GB (2048MB).
+- **Strengthened validation of profile definition**
+Added character count and format constraints at the structure level, such as `profileId`, `description`, `command`, and `path`. Prevents configuration errors before execution.
 
-- **SCP プロトコルのサポート**  
-  ローカルとリモート間での SCP によるファイル転送が可能になりました（アップロード／ダウンロード両対応）。
+### Improvements and fixes
+- Changed file transfer processing to stream transfer using `BufReader`, allowing stable support for large files (several hundred MB to GB).
+- Refactored the entire code and improved logging.
 
-- **ファイルサイズの上限バリデーションを追加**  
-  `config.yaml` で `maxFileSizeMb` を指定可能に。デフォルト500MB。上限は2GB（2048MB）に制限されています。
-
-- **プロファイル定義のバリデーション強化**  
-  `profileId`, `description`, `command`, `path` など、構造体レベルで文字数や形式の制約を追加。実行前の構成エラーを防止します。
-
-### 🛠 改善・修正
-
-- ファイル転送処理を `BufReader` によるストリーム転送へ変更し、大容量ファイル（数百MB〜GB）にも安定対応。
-- コード全体のリファクタリング・ロギングの改善。
-
-### ⚠ 互換性に関する注意
-
-- `config.yaml` に `maxFileSizeMb` を新たに追加することで、設定ファイルに変更が必要な場合があります（未指定時は500MBとして動作）。
+### Compatibility Notes
+- You may need to modify your configuration file by adding a new `maxFileSizeMb` to `config.yaml` (if not specified, it will default to 500MB).
 
 ---
 
 ## [v0.1.0] - 2025-06-01
-
-- 初期リリース（SFTP によるファイル転送、ジョブ連携機能など）
+- Initial release (file transfer via SFTP, job linking function, etc.)
 
 ---
 
