@@ -55,7 +55,7 @@ pub fn render_admin(f: &mut Frame, state: &AdminState) {
             }
 
             // ヘルプ表示
-            let help = Paragraph::new("[↑↓] Navigate  [Enter] Edit  [Q/Esc] Exit")
+            let help = Paragraph::new("[↑↓] Navigate [Ctrl+N] New Profile [Tab] Switch Profile/Config  [Enter] Edit  [Q/Esc] Exit")
                 .style(Style::default().fg(Color::Gray))
                 .wrap(Wrap { trim: true });
             f.render_widget(help, chunks[2]);
@@ -196,7 +196,7 @@ fn render_edit_view(f: &mut Frame, area: Rect, edit_state: &EditState) {
     }).collect();
 
     let table = Table::new(rows, &[Constraint::Percentage(100)])
-        .block(Block::default().borders(Borders::ALL).title("編集"))
+        .block(Block::default().borders(Borders::ALL).title("Edit"))
         .row_highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_widget(table, area);

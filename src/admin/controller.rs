@@ -7,7 +7,7 @@ use std::{fs, io};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use anyhow::Result;
 
-use crate::{render_admin, AdminMode, AdminState, AppConfig, EditState, Profile, UiState};
+use crate::{render_admin, AdminMode, AdminState, AppConfig, EditState, Profile, TransferProfile, UiState};
 
 
 
@@ -90,6 +90,13 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                         state.ui_state = UiState::EditView(EditState::from_config(&state.config));
                     }
                 }
+            }
+            KeyCode::Char('n') if modifiers.contains(KeyModifiers::CONTROL) => {
+                let new_profile = TransferProfile::default();
+                state.profiles.transfer_profiles.push(new_profile);
+                state.selected_index = state.profiles.transfer_profiles.len() - 1;
+                let profile_ref = state.profiles.transfer_profiles.get(state.selected_index).unwrap();
+                state.ui_state = UiState::EditView(EditState::from_profile(profile_ref));
             }
             KeyCode::Char('q') | KeyCode::Esc => {
                 // ListView上でのq/esc → 終了

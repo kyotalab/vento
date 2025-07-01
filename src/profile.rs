@@ -46,6 +46,40 @@ pub struct TransferProfile {
     pub on_error_command: Option<String>,
 }
 
+
+impl Default for TransferProfile {
+    fn default() -> Self {
+        TransferProfile {
+            profile_id: "new-profile".to_string(),
+            description: None,
+            source: Source {
+                kind: SourceType::Local,
+                path: "".to_string(),
+                host: None,
+                port: None,
+                authentication: None,
+                trigger: Trigger {
+                    kind: TriggerType::Manual,
+                    schedule: None,
+                },
+            },
+            destination: Destination {
+                kind: DestinationType::Local,
+                path: "".to_string(),
+                host: None,
+                port: None,
+                authentication: None,
+            },
+            transfer_protocol: TransferProtocol {
+                protocol: ProtocolType::Sftp,
+            },
+            pre_transfer_command: None,
+            post_transfer_command: None,
+            on_error_command: None,
+        }
+    }
+}
+
 lazy_static::lazy_static! {
     static ref PROFILE_ID_REGEX: regex::Regex = regex::Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
 }
