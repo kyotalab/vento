@@ -55,9 +55,11 @@ pub fn render_admin(f: &mut Frame, state: &AdminState) {
             }
 
             // ヘルプ表示
-            let help = Paragraph::new("[↑↓] Navigate [Ctrl+N] New Profile [Tab] Switch Profile/Config  [Enter] Edit  [Q/Esc] Exit")
-                .style(Style::default().fg(Color::Gray))
-                .wrap(Wrap { trim: true });
+            let help = Paragraph::new(
+                "[↑↓] Navigate  [Tab] Switch Profile/Config  [Enter] Edit  [Ctrl+N] New  [Ctrl+C] Copy  [Ctrl+D] Delete  [Q/Esc] Exit"
+            )
+            .style(Style::default().fg(Color::Gray))
+            .wrap(Wrap { trim: true });
             f.render_widget(help, chunks[2]);
         }
 
