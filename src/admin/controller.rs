@@ -78,9 +78,14 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                 }
             }
             KeyCode::Enter => {
-                if let AdminMode::Profile = state.mode {
-                    if let Some(profile) = state.profiles.transfer_profiles.get(state.selected_index) {
-                        state.ui_state = UiState::EditView(EditState::from_profile(profile));
+                match state.mode {
+                    AdminMode::Profile => {
+                        if let Some(profile) = state.profiles.transfer_profiles.get(state.selected_index) {
+                            state.ui_state = UiState::EditView(EditState::from_profile(profile));
+                        }
+                    }
+                    AdminMode::Config => {
+                        state.ui_state = UiState::EditView(EditState::from_config(&state.config));
                     }
                 }
             }
@@ -105,14 +110,24 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                 state.ui_state = UiState::ListView;
             }
             KeyCode::Char('s') if modifiers.contains(KeyModifiers::CONTROL) => {
-                if let Some(profile) = state.profiles.transfer_profiles.get_mut(state.selected_index) {
-                    edit_state.write_back_to_profile(profile);
-                    let path = shellexpand::tilde(
-                        state.config.default_profile_file.as_deref().unwrap_or("~/.config/vento/profiles.yaml")
-                    ).to_string();
-                    fs::write(&path, serde_yaml::to_string(&state.profiles)?)?;
-                    state.ui_state = UiState::ListView;
+                match state.mode {
+                    AdminMode::Profile => {
+                        if let Some(profile) = state.profiles.transfer_profiles.get_mut(state.selected_index) {
+                            edit_state.write_back_to_profile(profile);
+                            let path = shellexpand::tilde(
+                                state.config.default_profile_file.as_deref().unwrap_or("~/.config/vento/profiles.yaml")
+                            ).to_string();
+                            fs::write(&path, serde_yaml::to_string(&state.profiles)?)?;
+                        }
+                    }
+                    AdminMode::Config => {
+                        edit_state.write_back_to_config(&mut state.config);
+                        let config_path = "~/.config/vento/config.yaml"; // または state.config_path があれば使う
+                        let config_path = shellexpand::tilde(config_path).to_string();
+                        fs::write(&config_path, serde_yaml::to_string(&state.config)?)?;
+                    }
                 }
+                state.ui_state = UiState::ListView;
             }
             KeyCode::Left => {
                 if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {

@@ -25,6 +25,60 @@ pub struct EditState {
 }
 
 impl EditState {
+    pub fn from_config(config: &AppConfig) -> Self {
+        let input_fields = vec![
+            InputField::new("default_profile_file", config.default_profile_file.as_deref().unwrap_or_default(), Some("プロファイルファイルのパス")),
+            InputField::new("log_level", config.log_level.as_deref().unwrap_or_default(), Some("Info / Debug / Error")),
+            InputField::new("log_file", config.log_file.as_deref().unwrap_or_default(), Some("ログファイルのパス (任意)")),
+            InputField::new("log_stdout", config.log_stdout.map(|b| b.to_string()).as_deref().unwrap_or(""), Some("true / false")),
+            InputField::new("max_file_size_mb", config.max_file_size_mb.map(|n| n.to_string()).as_deref().unwrap_or(""), Some("最大ファイルサイズ (MB)")),
+        ];
+
+        EditState {
+            input_fields,
+            current_fields: 0,
+        }
+    }
+
+    pub fn write_back_to_config(&self, config: &mut AppConfig) {
+        for field in &self.input_fields {
+            match field.label.as_str() {
+                "default_profile_file" => {
+                    config.default_profile_file = if field.value.trim().is_empty() {
+                        None
+                    } else {
+                        Some(field.value.clone())
+                    };
+                }
+                "log_level" => {
+                    config.log_level = if field.value.trim().is_empty() {
+                        None
+                    } else {
+                        Some(field.value.clone())
+                    };
+                }
+                "log_file" => {
+                    config.log_file = if field.value.trim().is_empty() {
+                        None
+                    } else {
+                        Some(field.value.clone())
+                    };
+                }
+                "log_stdout" => {
+                    config.log_stdout = match field.value.trim().to_lowercase().as_str() {
+                        "true" => Some(true),
+                        "false" => Some(false),
+                        _ => None,
+                    };
+                }
+                "max_file_size_mb" => {
+                    config.max_file_size_mb = field.value.trim().parse::<u64>().ok();
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub fn from_profile(profile: &TransferProfile) -> Self {
         let input_fields = vec![
             InputField::new("profile_id", &profile.profile_id, Some("識別用ID")),
