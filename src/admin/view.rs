@@ -66,7 +66,7 @@ pub fn render_admin(f: &mut Frame, state: &AdminState) {
             render_edit_view(f, chunks[0], edit_state);
 
             // ヘルプ表示
-            let help = Paragraph::new("[↑↓] 項目移動  [文字入力] 編集  [Esc] 戻る")
+            let help = Paragraph::new("[↑↓/Tab] 次  [Shift+Tab] 前  [Ctrl+S] 保存  [Q/Esc] 戻る/終了")
                 .style(Style::default().fg(Color::Gray))
                 .wrap(Wrap { trim: true });
             f.render_widget(help, chunks[1]);

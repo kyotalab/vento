@@ -173,6 +173,28 @@ pub enum SourceType {
     Scp,
 }
 
+impl ToString for SourceType {
+    fn to_string(&self) -> String {
+        match self {
+            SourceType::Local => "local".into(),
+            SourceType::Sftp => "sftp".into(),
+            SourceType::Scp => "scp".into(),
+        }
+    }
+}
+
+impl FromStr for SourceType {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "local" => Ok(SourceType::Local),
+            "sftp" => Ok(SourceType::Sftp),
+            "scp" => Ok(SourceType::Scp),
+            other => Err(format!("'{}' is not allowed", other).into())
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Authentication {
@@ -190,6 +212,31 @@ pub enum AuthenticationMethod {
     PrivateKey,
     EnvKey,
     SshConfig,
+}
+
+impl ToString for AuthenticationMethod {
+   fn to_string(&self) -> String {
+        match self {
+            AuthenticationMethod::Password => "password".into(),
+            AuthenticationMethod::PrivateKey => "private_key".into(),
+            AuthenticationMethod::EnvKey => "env_key".into(),
+            AuthenticationMethod::SshConfig => "ssh_config".into(),
+        }
+    } 
+}
+
+
+impl FromStr for AuthenticationMethod {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "password" => Ok(AuthenticationMethod::Password),
+            "private_key" => Ok(AuthenticationMethod::PrivateKey),
+            "env_key" => Ok(AuthenticationMethod::EnvKey),
+            "ssh_config" => Ok(AuthenticationMethod::SshConfig),
+            other => Err(format!("'{}' is not allowed", other).into())
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -228,6 +275,26 @@ impl Trigger {
 pub enum TriggerType {
     Manual,
     Schedule,
+}
+
+impl ToString for TriggerType {
+    fn to_string(&self) -> String {
+        match self {
+            TriggerType::Manual => "manual".into(),
+            TriggerType::Schedule => "schedule".into(),
+        }
+    }
+}
+
+impl FromStr for TriggerType {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "sftp" => Ok(TriggerType::Manual),
+            "scp" => Ok(TriggerType::Schedule),
+            other => Err(format!("'{}' is not allowed", other).into())
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -302,6 +369,29 @@ pub enum DestinationType {
     Scp,
 }
 
+impl ToString for DestinationType {
+    fn to_string(&self) -> String {
+        match self {
+            DestinationType::Local => "local".into(),
+            DestinationType::Sftp => "sftp".into(),
+            DestinationType::Scp => "scp".into(),
+        }
+    }
+}
+
+impl FromStr for DestinationType {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "local" => Ok(DestinationType::Local),
+            "sftp" => Ok(DestinationType::Sftp),
+            "scp" => Ok(DestinationType::Scp),
+            other => Err(format!("'{}' is not allowed", other).into())
+        }
+    }
+}
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferProtocol {
@@ -320,6 +410,17 @@ impl ToString for ProtocolType {
         match self {
             ProtocolType::Sftp => "SFTP".into(),
             ProtocolType::Scp => "SCP".into(),
+        }
+    }
+}
+
+impl FromStr for ProtocolType {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "sftp" => Ok(ProtocolType::Sftp),
+            "scp" => Ok(ProtocolType::Scp),
+            other => Err(format!("'{}' is not allowed", other).into())
         }
     }
 }
