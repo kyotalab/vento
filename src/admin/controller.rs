@@ -114,14 +114,43 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                     state.ui_state = UiState::ListView;
                 }
             }
+            KeyCode::Left => {
+                if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {
+                    if field.cursor_pos > 0 {
+                        field.cursor_pos -= 1;
+                    }
+                }
+            }
+            KeyCode::Right => {
+                if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {
+                    if field.cursor_pos < field.value.len() {
+                        field.cursor_pos += 1;
+                    }
+                }
+            }
             KeyCode::Char(c) => {
                 if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {
-                    field.value.push(c);
+                    let mut chars: Vec<char> = field.value.chars().collect();
+                    chars.insert(field.cursor_pos, c);
+                    field.value = chars.into_iter().collect();
+                    field.cursor_pos += 1;
                 }
             }
             KeyCode::Backspace => {
                 if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {
-                    field.value.pop();
+                    if field.cursor_pos > 0 {
+                        let mut chars: Vec<char> = field.value.chars().collect();
+                        chars.remove(field.cursor_pos - 1);
+                        field.value = chars.into_iter().collect();
+                        field.cursor_pos -= 1;
+                    }
+                }
+            }
+            KeyCode::Delete => {
+                if let Some(field) = edit_state.input_fields.get_mut(edit_state.current_fields) {
+                    if field.cursor_pos < field.value.len() {
+                        field.value.remove(field.cursor_pos);
+                    }
                 }
             }
             _ => {}

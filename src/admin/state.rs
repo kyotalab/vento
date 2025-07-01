@@ -191,10 +191,16 @@ pub struct InputField {
     pub label: String,
     pub value: String,
     pub hint: Option<String>,
+    pub cursor_pos: usize,
 }
 
 impl InputField {
-    pub fn new(label: impl Into<String>, value: impl Into<String>, hint: Option<&str>) -> Self {
-        InputField { label: label.into(), value: value.into(), hint: hint.map(|s| s.to_string()) }
+    pub fn new(label: impl Into<String>, value: &str, hint: Option<&str>) -> Self {
+        InputField {
+            label: label.into(),
+            value: value.into(),
+            hint: hint.map(|s| s.to_string()),
+            cursor_pos: value.chars().count(),
+        }
     }
 }

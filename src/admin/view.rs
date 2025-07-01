@@ -171,18 +171,27 @@ fn render_config_summary(f: &mut Frame, area: Rect, state: &AdminState) {
     f.render_widget(table, area);
 }
 
-
-
 fn render_edit_view(f: &mut Frame, area: Rect, edit_state: &EditState) {
     let rows: Vec<Row> = edit_state.input_fields.iter().enumerate().map(|(i, field)| {
         let label = &field.label;
-        let value = &field.value;
+        let value = if i == edit_state.current_fields {
+            // カーソル位置を表示するために、▏を挿入
+            let mut chars: Vec<char> = field.value.chars().collect();
+            let pos = field.cursor_pos.min(chars.len());
+            chars.insert(pos, '▏'); // '|'より視認性の良いカーソル
+            chars.into_iter().collect::<String>()
+        } else {
+            field.value.clone()
+        };
+
         let display = format!("{}: {}", label, value);
+
         let style = if i == edit_state.current_fields {
             Style::default().bg(Color::Yellow).fg(Color::Black)
         } else {
             Style::default()
         };
+
         Row::new(vec![Cell::from(display)]).style(style)
     }).collect();
 
@@ -192,4 +201,3 @@ fn render_edit_view(f: &mut Frame, area: Rect, edit_state: &EditState) {
 
     f.render_widget(table, area);
 }
-
