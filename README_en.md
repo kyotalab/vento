@@ -18,7 +18,7 @@ Vento is a lightweight, fast, and easy-to-use command-line tool for file transfe
 
 With a single YAML configuration file, you can define flexible transfer profiles and automate file uploads/downloads between your local filesystem and remote servers over SFTP or SCP. You can also configure pre/post-transfer and error handling commands, enabling reliable and customizable batch operations.
 
-## Key Features (v0.2.0)
+## Key Features (v0.3.0)
 
 - **Transfer Profiles via YAML**: Easily define source, destination, protocol, authentication, and hooks.
 - **SFTP Transfers**: Upload/download files between local and SFTP servers, with SSH key authentication support.
@@ -76,13 +76,15 @@ transferProfiles:
 ### 🧰 Install
 
 **Option 1**: Download binaries from GitHub Releases (macOS/Linux/Windows)  
-**Option 2**: Install via Homebrew  
+**Option 2**: Install via Homebrew
+
 ```bash
 brew tap kyotalab/vento
 brew install vento
 ```
 
-**Option 3**: Build from source with Rust  
+**Option 3**: Build from source with Rust
+
 ```bash
 git clone https://github.com/kyotalab/vento.git
 cd vento
@@ -100,6 +102,7 @@ vento transfer --profile-id daily-upload
 Many enterprises rely on heavyweight tools like HULFT for internal file sharing and automation. Vento aims to bring that power into the hands of developers and engineers in a lightweight, OSS-friendly CLI.
 
 It’s designed for:
+
 - Schedulers (cron/systemd)
 - CI/CD pipelines
 - Secure batch operations
