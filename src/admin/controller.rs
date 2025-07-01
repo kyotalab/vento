@@ -28,6 +28,7 @@ pub fn run_admin_ui(config: AppConfig, profiles: Profile) -> Result<()> {
 
 
     // メインループ
+    // main loop
     loop {
         terminal.draw(|f| render_admin(f, &state))?;
 
@@ -43,6 +44,7 @@ pub fn run_admin_ui(config: AppConfig, profiles: Profile) -> Result<()> {
     }
 
     // クリーンアップ
+    // clean up
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     terminal.show_cursor()?;
@@ -122,7 +124,7 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                     }
                     AdminMode::Config => {
                         edit_state.write_back_to_config(&mut state.config);
-                        let config_path = "~/.config/vento/config.yaml"; // または state.config_path があれば使う
+                        let config_path = "~/.config/vento/config.yaml"; // Or use state.config_path if it exists
                         let config_path = shellexpand::tilde(config_path).to_string();
                         fs::write(&config_path, serde_yaml::to_string(&state.config)?)?;
                     }

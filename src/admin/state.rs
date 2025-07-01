@@ -27,11 +27,11 @@ pub struct EditState {
 impl EditState {
     pub fn from_config(config: &AppConfig) -> Self {
         let input_fields = vec![
-            InputField::new("default_profile_file", config.default_profile_file.as_deref().unwrap_or_default(), Some("プロファイルファイルのパス")),
+            InputField::new("default_profile_file", config.default_profile_file.as_deref().unwrap_or_default(), Some("Profile file path")),
             InputField::new("log_level", config.log_level.as_deref().unwrap_or_default(), Some("Info / Debug / Error")),
-            InputField::new("log_file", config.log_file.as_deref().unwrap_or_default(), Some("ログファイルのパス (任意)")),
+            InputField::new("log_file", config.log_file.as_deref().unwrap_or_default(), Some("Log file path(Optional)")),
             InputField::new("log_stdout", config.log_stdout.map(|b| b.to_string()).as_deref().unwrap_or(""), Some("true / false")),
-            InputField::new("max_file_size_mb", config.max_file_size_mb.map(|n| n.to_string()).as_deref().unwrap_or(""), Some("最大ファイルサイズ (MB)")),
+            InputField::new("max_file_size_mb", config.max_file_size_mb.map(|n| n.to_string()).as_deref().unwrap_or(""), Some("Max file size(MB)")),
         ];
 
         EditState {
@@ -81,16 +81,16 @@ impl EditState {
 
     pub fn from_profile(profile: &TransferProfile) -> Self {
         let input_fields = vec![
-            InputField::new("profile_id", &profile.profile_id, Some("識別用ID")),
-            InputField::new("description", profile.description.as_deref().unwrap_or_default(), Some("説明 (任意)")),
+            InputField::new("profile_id", &profile.profile_id, Some("Profile ID")),
+            InputField::new("description", profile.description.as_deref().unwrap_or_default(), Some("Description(Optional)")),
 
             // Source
             InputField::new("source.type", &profile.source.kind.to_string(), Some("Local / Sftp / Scp")),
             InputField::new("source.path", &profile.source.path, Some("送信元パス")),
-            InputField::new("source.host", profile.source.host.as_deref().unwrap_or_default(), Some("ホスト名 (任意)")),
-            InputField::new("source.port", &profile.source.port.map(|p| p.to_string()).unwrap_or_default(), Some("ポート番号 (任意)")),
+            InputField::new("source.host", profile.source.host.as_deref().unwrap_or_default(), Some("Hostname")),
+            InputField::new("source.port", &profile.source.port.map(|p| p.to_string()).unwrap_or_default(), Some("Port No")),
             InputField::new("source.trigger", &profile.source.trigger.kind.to_string(), Some("Manual / Schedule")),
-            InputField::new("source.schedule", profile.source.trigger.schedule.as_deref().unwrap_or_default(), Some("cron式 (任意)")),
+            InputField::new("source.schedule", profile.source.trigger.schedule.as_deref().unwrap_or_default(), Some("cron format")),
 
             InputField::new("source.auth.method", &profile.source.authentication.as_ref().map(|a| a.method.to_string()).unwrap_or_default(), Some("Password / PrivateKey / EnvKey / SshConfig")),
             InputField::new("source.auth.username", &profile.source.authentication.as_ref().map(|a| a.username.clone()).unwrap_or_default(), None),
@@ -100,9 +100,9 @@ impl EditState {
 
             // Destination
             InputField::new("destination.type", &profile.destination.kind.to_string(), Some("Local / Sftp / Scp")),
-            InputField::new("destination.path", &profile.destination.path, Some("送信先パス")),
-            InputField::new("destination.host", profile.destination.host.as_deref().unwrap_or_default(), Some("ホスト名 (任意)")),
-            InputField::new("destination.port", &profile.destination.port.map(|p| p.to_string()).unwrap_or_default(), Some("ポート番号 (任意)")),
+            InputField::new("destination.path", &profile.destination.path, Some("Destination file path")),
+            InputField::new("destination.host", profile.destination.host.as_deref().unwrap_or_default(), Some("Hostname")),
+            InputField::new("destination.port", &profile.destination.port.map(|p| p.to_string()).unwrap_or_default(), Some("Port No")),
             InputField::new("destination.auth.method", &profile.destination.authentication.as_ref().map(|a| a.method.to_string()).unwrap_or_default(), Some("Password / PrivateKey / EnvKey / SshConfig")),
             InputField::new("destination.auth.username", &profile.destination.authentication.as_ref().map(|a| a.username.clone()).unwrap_or_default(), None),
             InputField::new("destination.auth.password_ref", &profile.destination.authentication.as_ref().and_then(|a| a.password_ref.clone()).unwrap_or_default(), None),
@@ -111,9 +111,9 @@ impl EditState {
 
             // Transfer Settings
             InputField::new("transfer_protocol", &profile.transfer_protocol.protocol.to_string(), Some("SFTP / SCP")),
-            InputField::new("pre_transfer_command", profile.pre_transfer_command.as_deref().unwrap_or_default(), Some("事前コマンド (任意)")),
-            InputField::new("post_transfer_command", profile.post_transfer_command.as_deref().unwrap_or_default(), Some("事後コマンド (任意)")),
-            InputField::new("on_error_command", profile.on_error_command.as_deref().unwrap_or_default(), Some("エラー時コマンド (任意)")),
+            InputField::new("pre_transfer_command", profile.pre_transfer_command.as_deref().unwrap_or_default(), Some("Pre transfer command(Optional)")),
+            InputField::new("post_transfer_command", profile.post_transfer_command.as_deref().unwrap_or_default(), Some("Post trasnfer command(Optional)")),
+            InputField::new("on_error_command", profile.on_error_command.as_deref().unwrap_or_default(), Some("On error command(Optional)")),
         ];
 
         EditState {
