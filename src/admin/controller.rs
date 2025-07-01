@@ -98,6 +98,32 @@ pub fn handle_key_event(event: KeyEvent, state: &mut AdminState) -> Result<bool>
                 let profile_ref = state.profiles.transfer_profiles.get(state.selected_index).unwrap();
                 state.ui_state = UiState::EditView(EditState::from_profile(profile_ref));
             }
+            KeyCode::Char('d') if modifiers.contains(KeyModifiers::CONTROL) => {
+                if let AdminMode::Profile = state.mode {
+                    if state.selected_index < state.profiles.transfer_profiles.len() {
+                        state.profiles.transfer_profiles.remove(state.selected_index);
+                        if state.selected_index > 0 {
+                            state.selected_index -= 1;
+                        }
+                        let path = shellexpand::tilde(
+                            state.config.default_profile_file.as_deref().unwrap_or("~/.config/vento/profiles.yaml")
+                        ).to_string();
+                        fs::write(&path, serde_yaml::to_string(&state.profiles)?)?;
+                    }
+                }
+            }
+            KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => {
+                if let AdminMode::Profile = state.mode {
+                    if let Some(profile) = state.profiles.transfer_profiles.get(state.selected_index) {
+                        let mut cloned = profile.clone();
+                        cloned.profile_id = format!("{}_copy", cloned.profile_id); // 適当なsuffix
+                        state.profiles.transfer_profiles.push(cloned);
+                        state.selected_index = state.profiles.transfer_profiles.len() - 1;
+                        let profile_ref = state.profiles.transfer_profiles.get(state.selected_index).unwrap();
+                        state.ui_state = UiState::EditView(EditState::from_profile(profile_ref));
+                    }
+                }
+            }
             KeyCode::Char('q') | KeyCode::Esc => {
                 // ListView上でのq/esc → 終了
                 return Ok(false);
